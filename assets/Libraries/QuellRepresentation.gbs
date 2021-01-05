@@ -42,8 +42,8 @@ type QElem is variant {
    case Limit      { field corner      // Maybe(Dir)
                      field pointsTo    // Maybe(Dir)
                    }
-   case Portal     { field endpointA   // Pos
-                     field endpointB   // Pos
+   case Portal     { field doorA       // Pos
+                     field doorB       // Pos
                    }
    case Multispike {}
    case Spike      { field rotable     // Bool
@@ -55,7 +55,7 @@ type QElem is variant {
 }
 
 type QJewel is record {
-   field pos          // Pos
+   field jpos         // Pos
    field hitsReceived // Number 
    field found        // Bool
 }
@@ -78,6 +78,12 @@ function cSW_(dir) { return(Limit(corner   <- just(North), pointsTo <- just(dir)
 
 function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
+
+function isPearl_(qelem) {
+  return(matching (qelem) select 
+           True  on Pearl
+           False otherwise)
+}
 /* ============================================================================================================
    END QuellRepresentation.gbs
    ============================================================================================================

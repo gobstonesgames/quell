@@ -1,14 +1,14 @@
-function level01() {
+function level() {
   return(QuellLevel(
-   board     <- board01() 
-   ball      <- just(pos(4,3)
-   inTransit <- Nothing
-   numPearls <- 4
-   minMoves  <- just(3)
-   jewel     <- QJewel(
-                  pos          <- pos(3,9)
-                  hitsReceived <- 0 
-                  found        <- True
+     board     <- board01() 
+   , ball      <- just(pos(4,3))
+   , inTransit <- Nothing
+   , numPearls <- 4
+   , minMoves  <- just(3)
+   , jewel     <- QJewel(
+                      pos          <- pos(3,9)
+                    , hitsReceived <- 0 
+                    , found        <- True
   )))
 }
 

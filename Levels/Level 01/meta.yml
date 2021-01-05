@@ -1,9 +1,9 @@
 name: 'Quell, level 1'
 attire:
-  active: Quell
+  active: none
 blocks:
   disabled: []
-  visible:  []
+  visible:  ["Just run the code"]
 
 inherit:
   $course: gobstonesgames/quell

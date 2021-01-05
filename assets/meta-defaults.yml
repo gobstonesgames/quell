@@ -19,3 +19,6 @@ execution_speed:
     can_change_speed: true
 library:
   visible: false
+blocks:
+  defaultToolbox: |
+      <category name="Just run the code" gbs_custom="SEPARATOR">

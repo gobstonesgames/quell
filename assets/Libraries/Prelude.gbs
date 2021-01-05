@@ -91,7 +91,7 @@ type Pos is record {
    field col    // Number
 }
 
-function pos(r, c) { return(Pos(row <- r, column<-c)) }
+function pos(r, c) { return(Pos(row <- r, col<-c)) }
 
 procedure GoToCell_(pos) {
   GoToEdge(West)      
@@ -134,7 +134,7 @@ function hOffset (dir) {
              0 otherwise) 
 }
 
-procedure DrawPos_With(vec, color) {
+procedure DrawPos_With_(vec, color) {
   Drop__Times(color, codeOfPos_(vec))
 }
 

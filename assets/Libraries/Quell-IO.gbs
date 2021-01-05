@@ -15,7 +15,7 @@ function currentQuell() {
   return (currentQLevel())
 }
 
-procedure WriteQuell(quell) {
+procedure WriteQuell_(quell) {
   /* PRECOND: * Gobstones board is big enough to represent the quell board */
   DrawQLevel_(quell)
 }
@@ -37,19 +37,19 @@ procedure WriteQuell(quell) {
     + Wall,       2 stones
     + Box,        3 stones
     + Limit,      4 stones
-                     * isCorner,  attrA stones
-                     * pointsTo,  attrB stones 
+                     * isCorner, attrA stones
+                     * pointsTo, attrB stones 
     + Portal, 5 stones
-                     * endpointA, attrA stones
-                     * endpointB, attrB stones
+                     * doorA,    attrA stones
+                     * doorB,    attrB stones
     + Multispike, 6 stones
     + Spike,      7 stones
-                     * rotable,   attrA stones 
-                     * dir,       atrrB stones
+                     * rotable,  attrA stones 
+                     * dir,      atrrB stones
     + Switch,     8 stones
-                     * dir,       attrB stones
+                     * dir,      attrB stones
     + Gate,       9 stones
-                     * open,      attrA stones
+                     * open,     attrA stones
     + Out,       10 stones (or 110 for special case)
   
    QLevel info is represented at SouthWestWest corner with 110 qelem stones and 
@@ -69,7 +69,7 @@ function currentQLevel() {
   let (curMinMoves, found)        := currentQInfo()
   let (curBoard, curNumPearls)    := currentQBoard()
   let (curBallMPos, curBoardMDir) := currentQBallInfo()
-  curJewelInfo                    := currentJewel(found)
+  curJewelInfo                    := currentQJewel(found)
   return (QuellLevel(board     <- curBoard
                    , ball      <- curBallMPos
                    , inTransit <- curBoardMDir
@@ -80,7 +80,7 @@ function currentQLevel() {
 
 // Level 1
 function currentQInfo() {
-  GoToCorner(South, West)
+  GoToCorner__(South, West)
   Assert_OrFail_(numStones(qelemColor()) == 110, msgNoQuellLevel())
   curMinMoves := currentMNumWith_(attrAColor())
   found       := currentBoolWith_(attrBColor())
@@ -88,7 +88,7 @@ function currentQInfo() {
 }
 
 function currentQBoard() {
-  GoToCorner(South,East)
+  GoToCorner__(South,East)
   let (curBoard, curNumPearls) := currentRowInfo()
   while (canMove(North)) {
     Move(North)
@@ -105,12 +105,12 @@ function currentQBallInfo() {
                 (Nothing           , Nothing)                       otherwise)
 }
 
-function currentJewel(found) {
+function currentQJewel(found) {
   /* PRECOND: * there is a jewel represented in the board */
-  GoToJewel()
-  return(Jewel(found        <- found
-             , pos          <- currentPos()
-             , hitsReceived <- numStones attrAColor ()-1))
+  GoToQJewel()
+  return(QJewel(found        <- found
+              , jpos          <- currentPos()
+              , hitsReceived <- numStones(attrAColor())-1))
 }
 
 // Level 2
@@ -122,24 +122,24 @@ procedure GoToBall() {
   }
 }
 
-procedure GoToJewel() {
+procedure GoToQJewel() {
   StartBoardTraverseTo_And_(East, North)
   while(not atEndOfBoardTraverseTo_And_(East, North) 
-     && not hasJewel()) {
+     && not hasQJewel()) {
     GoToNextCellInBoardTraverseTo_And_(East, North) 
   }
 }
 
-function curRowInfo() {
+function currentRowInfo() {
   GoToEdge(West)
-  qelem        := curQElem()
+  qelem        := currentQElem()
   curRow       := [ qelem ]
-  curNumPearls := delta(isPearl(qelem))
+  curNumPearls := delta(isPearl_(qelem))
   while (canMove(East)) {
      Move(East)
-     qelem        := curQElem()
+     qelem        := currentQElem()
      curRow       := [ qelem ] ++ curRow
-     curNumPearls := curNumPearls + delta(isPearl(qelem))
+     curNumPearls := curNumPearls + delta(isPearl_(qelem))
   }
   return ([ curRow ], curNumPearls)
 }
@@ -153,7 +153,7 @@ function currentQElem() {
           currentBox()          on 3
           currentLimit()        on 4
           currentPortal()       on 5
-          Multispikes           on 6
+          Multispike            on 6
           currentSpike()        on 7
           currentSwitch()       on 8
           currentGate()         on 9
@@ -169,8 +169,8 @@ function currentBox() {
 
 function currentLimit() {
   /* PRECOND: * there is a limit represented in the current cell */
-  return(Limit(corner <- currentMDirWith_(attrAColor())
-             , dir    <- currentMDirWith_(attrBColor())))
+  return(Limit(corner   <- currentMDirWith_(attrAColor())
+             , pointsTo <- currentMDirWith_(attrBColor())))
 }
 
 function currentPortal() {
@@ -195,16 +195,16 @@ function currentGate() {
   return(Gate(open <- currentBoolWith_(attrAColor())))
 }
 
-function hasBall()  { return(num_IsBetween_And_(numStones(ballColor()), 1, 5)       }
-function hasJewel() { return ((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
-function hasWall()  { return(numStones(qelemColor())==2)                            }
-function hasEmpty() { return(numStones(qelemColor())==0)                            }
+function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
+function hasQJewel() { return((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
+function hasWall()   { return(numStones(qelemColor())==2)                           }
+function hasEmpty()  { return(numStones(qelemColor())==0)                           }
 
 // ---------
 // Drawing operations
 // ---------
 procedure DrawQLevel_(quell) {
-  EmptyBoard()
+  ClearBoard()
   DrawQInfo_(quell)
   DrawQBoard_(board(quell))
   DrawQBall_To_(ball(quell), inTransit(quell))
@@ -213,7 +213,7 @@ procedure DrawQLevel_(quell) {
 
 // Level 1
 procedure DrawQInfo_(quell) {
-  GoToCorner(South, West)
+  GoToCorner__(South, West)
   Drop__Times(qelemColor(), 100)
   DrawMNum_With_(minMoves(quell), attrAColor())
   DrawBool_With_(found(jewel(quell)), attrBColor())
@@ -221,11 +221,11 @@ procedure DrawQInfo_(quell) {
 
 procedure DrawQBoard_(board) {
   /* PRECOND: * the board has at least one qelem */
-  GoToCorner(South, West)
+  GoToCorner__(South, West)
   curBoard := reverse(board)
   DrawQRow_(head(curBoard))
-  foreach row on tail(curBoard) {
-    Move(South)
+  foreach row in tail(curBoard) {
+    Move(North)
     DrawQRow_(row)
   }
 }
@@ -239,7 +239,7 @@ procedure DrawQBall_To_(ball, mdir) {
 }
 
 procedure DrawQJewel_(jewel) {
-  GoToCell(col(pos(jewel)), row(pos(jewel)))
+  GoToCell(col(jpos(jewel)), row(pos(jewel)))
   Drop__Times(attrAColor(), 1+hitsReceived(jewel))
   DrawBool_With_(found(jewel), attrBColor())
 }
@@ -249,18 +249,29 @@ procedure DrawBall_(mdir) {
   DrawMDir_With_(mdir, ballColor())
 }
 
+procedure DrawQRow_(row) {
+  /* PRECOND: * the row has at least one element */
+  GoToEdge(West)
+  DrawQelem_(head(row))
+  foreach qelem in tail(row) {
+    Move(East)
+    DrawQelem_(qelem)  
+  }
+}
+
 procedure DrawQelem_(qelem) {
   Drop__Times(qelemColor(), codeOfQelem_(qelem))
   switch (qelem) {
     Box(gender)             -> { DrawGender_With_(gender, attrAColor()) }
     Limit(corner, pointsTo) -> { DrawMDir_With_(corner, attrAColor())
-                                 DrawMDir_With_(poontsTo, attrBColor()) }
+                                 DrawMDir_With_(pointsTo, attrBColor()) }
     Portal(doorA, doorB)    -> { DrawPos_With_(doorA, attrAColor())
                                  DrawPos_With_(doorB, attrBColor())     }
     Spike(rotable, dir)     -> { DrawBool_With_(rotable, attrAColor())
                                  DrawDir_With_(dir, attrBColor())       }
     Switch(dir)             -> { DrawDir_With_(dir, attrBColor())       }
     Gate(open)              -> { DrawBool_With_(open, attrAColor())     }
+    _                       -> { }
     }
 }
 
@@ -268,14 +279,14 @@ procedure DrawQelem_(qelem) {
 // Codes
 // ---------
 function codeOfQelem_(qelem) {
-  return (matching qelem select
+  return (matching (qelem) select
              0 on Empty
              1 on Pearl
              2 on Wall
              3 on Box
              4 on Limit
              5 on Portal
-             6 on Multispikes
+             6 on Multispike
              7 on Spike
              8 on Switch
              9 on Gate
