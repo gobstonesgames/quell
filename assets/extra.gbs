@@ -612,7 +612,7 @@ function currentQuell() {
   return (currentQLevel())
 }
 
-procedure WriteQuell(quell) {
+procedure WriteQuell_(quell) {
   /* PRECOND: * Gobstones board is big enough to represent the quell board */
   DrawQLevel_(quell)
 }
@@ -704,9 +704,9 @@ function currentQBallInfo() {
 
 function currentQJewel(found) {
   /* PRECOND: * there is a jewel represented in the board */
-  GoToJewel()
+  GoToQJewel()
   return(QJewel(found        <- found
-              , jpos         <- currentPos()
+              , jpos          <- currentPos()
               , hitsReceived <- numStones(attrAColor())-1))
 }
 
@@ -917,3 +917,4 @@ function msgNoQElement() {
    END Quell-IO.gbs
    ============================================================================================================
 */
+

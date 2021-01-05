@@ -233,13 +233,13 @@ procedure DrawQBoard_(board) {
 procedure DrawQBall_To_(ball, mdir) {
    if (not isNothing(ball)) {
      pos := fromJust(ball)
-     GoToCell(col(pos), row(pos))
+     GoToCell_(pos)
      DrawBall_(mdir)
    }
 }
 
 procedure DrawQJewel_(jewel) {
-  GoToCell(col(jpos(jewel)), row(pos(jewel)))
+  GoToCell_(jpos(jewel))
   Drop__Times(attrAColor(), 1+hitsReceived(jewel))
   DrawBool_With_(found(jewel), attrBColor())
 }

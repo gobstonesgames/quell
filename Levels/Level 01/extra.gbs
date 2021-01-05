@@ -6,7 +6,7 @@ function level() {
    , numPearls <- 4
    , minMoves  <- just(3)
    , jewel     <- QJewel(
-                      pos          <- pos(3,9)
+                      jpos         <- pos(3,9)
                     , hitsReceived <- 0 
                     , found        <- True
   )))
