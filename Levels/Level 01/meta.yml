@@ -1,0 +1,19 @@
+name: 'Quell, level 1'
+attire:
+  active: Quell
+blocks:
+  disabled: []
+  visible:  []
+
+inherit:
+  $course: gobstonesgames/quell
+  $assets:
+    extra: true
+    attires:
+      - Quell
+  execution_speed: true
+  library: true
+  board: true
+  attire:
+    user_permissions: true
+    visible: true

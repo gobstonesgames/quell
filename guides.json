@@ -1,0 +1,10 @@
+[ 
+  { "name": "Tutorial"                      , "repo": "gobstonesgames/quell",
+    "exercises": [
+      { "id": "1", "name": "Level 01", "path": "Levels/Level01" }
+    , { "id": "2", "name": "Level 02", "path": "Levels/Level02" }
+    , { "id": "3", "name": "Level 03", "path": "Levels/Level03" }
+    , { "id": "4", "name": "Level 04", "path": "Levels/Level04" }
+    ] 
+  }
+]

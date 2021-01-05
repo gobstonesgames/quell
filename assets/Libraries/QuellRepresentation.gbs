@@ -1,0 +1,84 @@
+/* ============================================================================================================
+   START QuellRepresentation.gbs
+   Definition of the datatypes representing a Quell level
+// REQUIRE: Babel.gbs
+// REQUIRE: Prelude.gbs
+   ============================================================================================================
+*/
+
+type QuellLevel is record {
+  /* INV.REP.:
+       * board represent a Quell level
+           - all elements of the list at field board are lists of the same length
+           - all rows or columns that have some element diferent of Out have at least 2 Limits pointing to each other (no other limit in between 2 pointing limits), and all elements different from Out in between a pair of pointing limits, and no Out elements are in between a pair of pointing limits
+           - if the ball field is Just(fromJust<-pos), then the element at pos in board is either Empty or an open Gate or a Portal or a Switch, and pos is between Limits pointing to each other
+           - the inTransit field is Just(dirOfMove) iff ball is not Nothing and the QElem in the next position in the dirOfBoard (see nextPos) is not a blocking element, that is:
+               + a Wall, or 
+               + a Spike pointing at opposite(dirOfMove), or 
+               + a closed Gate
+               + a blocked Box
+           - all doors of Portals are valid positions in the board
+           - every QElem equal to a Portal is placed at one of its doors' position, and in the other position there is also a Portal with matching doors
+           - all Switches have the same value in their dir fields
+           - all Spikes that have the  rotable field in True, have the same value for their dir field, and it is the same value than the dir field in all Switches
+       * numPearls is equal to the number of pearls in the board
+       * minMoves is the minimum number of moves required to solve the level using Quell rules (Nothing if not solvable)
+       * the pos at field jewel indicates a valid position in the given board, and the QElem in that position is either Wall or Empty
+       * the QElem at SouthWest corner of the board is Out (for drawing information about the level)
+   */
+   field board     // [[QElem]] 
+   field ball      // Maybe(Pos)
+   field inTransit // Maybe(Dir)
+   field numPearls // Number
+   field minMoves  // Maybe(Number)
+   field jewel     // QJewel
+}
+
+type QElem is variant {
+   case Empty      {}
+   case Pearl      {}
+   case Wall       {}
+   case Box        { field gender }    // Gender
+   case Limit      { field corner      // Maybe(Dir)
+                     field pointsTo    // Maybe(Dir)
+                   }
+   case Portal     { field endpointA   // Pos
+                     field endpointB   // Pos
+                   }
+   case Multispike {}
+   case Spike      { field rotable     // Bool
+                     field dir         // Direction
+                   }
+   case Switch     { field dir }       // Direction
+   case Gate       { field open }      // Bool
+   case Out        {}
+}
+
+type QJewel is record {
+   field pos          // Pos
+   field hitsReceived // Number 
+   field found        // Bool
+}
+
+type BallAction is variant {
+  case Move {}
+  case Stay {}
+  case Pop  {}
+}
+
+function cNW()     { return(Limit(corner   <- just(East) , pointsTo <- Nothing))   }
+function cNE()     { return(Limit(corner   <- just(South), pointsTo <- Nothing))   }
+function cSE()     { return(Limit(corner   <- just(West) , pointsTo <- Nothing))   }
+function cSW()     { return(Limit(corner   <- just(North), pointsTo <- Nothing))   }
+
+function cNW_(dir) { return(Limit(corner   <- just(East) , pointsTo <- just(dir))) }
+function cNE_(dir) { return(Limit(corner   <- just(South), pointsTo <- just(dir))) }
+function cSE_(dir) { return(Limit(corner   <- just(West) , pointsTo <- just(dir))) }
+function cSW_(dir) { return(Limit(corner   <- just(North), pointsTo <- just(dir))) }
+
+function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
+function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
+/* ============================================================================================================
+   END QuellRepresentation.gbs
+   ============================================================================================================
+*/

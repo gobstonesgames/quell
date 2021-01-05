@@ -1,0 +1,27 @@
+function level01() {
+  return(QuellLevel(
+   board     <- board01() 
+   ball      <- just(pos(4,3)
+   inTransit <- Nothing
+   numPearls <- 4
+   minMoves  <- just(3)
+   jewel     <- QJewel(
+                  pos          <- pos(3,9)
+                  hitsReceived <- 0 
+                  found        <- True
+  )))
+}
+
+function board01() { 
+  // [[QElem]], size=pos(8,15)
+  return(
+   [[Out       , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        , Out        , Out        , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        ]
+   ,[cNW()     , cSE_(East) , Wall       , Wall       , Wall       , cSW()      , cNE()      , Out        , cNW()      , cSE()      , Wall       , Wall       , Wall       , cSW()      , cNE()      ]
+   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , lV_(West)  , Out        , lV_(East)  , Wall       , Empty      , Empty      , Pearl      , Wall       , lV_(West)  ]
+   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , cSW_(West) , lH_(South) , cSE_(East) , Wall       , Empty      , Wall       , Empty      , Wall       , lV_(West)  ]
+   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , Wall       , Wall       , Wall       , Wall       , Empty      , Empty      , Empty      , Wall       , lV_(West)  ]
+   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Empty      , Pearl      , Pearl      , Pearl      , Empty      , Empty      , Empty      , Empty      , Wall       , lV_(West)  ]
+   ,[cSW()     , cNE_(East) , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , cNW_(West) , cSE()      ]
+   ,[Out       , cSW()      , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , cSE()      , Out        ]
+   ])
+}

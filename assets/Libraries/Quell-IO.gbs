@@ -1,0 +1,311 @@
+/* ============================================================================================================
+   START Quell-IO.gbs
+   Operations to draw and read a Quell level from the board
+// REQUIRE: Babel.gbs
+// REQUIRE: Prelude.gbs
+// REQUIRE: QuellRepresentation.gbs
+   ============================================================================================================
+*/
+
+// ---------
+// Quell I/O operations
+// ---------
+function currentQuell() {
+  /* PRECOND: * there is a quell level represented in the Gobstones board */
+  return (currentQLevel())
+}
+
+procedure WriteQuell(quell) {
+  /* PRECOND: * Gobstones board is big enough to represent the quell board */
+  DrawQLevel_(quell)
+}
+
+// ---------
+// Representation
+// ---------
+/*
+  The ball is represented with ballColor() stones (standard representation for MDir:, 1 to 5 stones:
+    + moving North, 1 stone
+    + moving East,  2 stones
+    + moving South, 3 stones
+    + moving West,  4 stones
+    + not moving,   5 stones)
+     
+   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
+    + Empty, no qelem stones
+    + Pearl,      1 stone
+    + Wall,       2 stones
+    + Box,        3 stones
+    + Limit,      4 stones
+                     * isCorner,  attrA stones
+                     * pointsTo,  attrB stones 
+    + Portal, 5 stones
+                     * endpointA, attrA stones
+                     * endpointB, attrB stones
+    + Multispike, 6 stones
+    + Spike,      7 stones
+                     * rotable,   attrA stones 
+                     * dir,       atrrB stones
+    + Switch,     8 stones
+                     * dir,       attrB stones
+    + Gate,       9 stones
+                     * open,      attrA stones
+    + Out,       10 stones (or 110 for special case)
+  
+   QLevel info is represented at SouthWestWest corner with 110 qelem stones and 
+    + attrA stones to indicate minMoves of the level
+    + attrB stones to indicate if jewel was found
+
+  The jewel is represented on its position if it was not found, using
+    + hitsReceived, attrA stones
+*/
+
+// ---------
+// Reading operations
+// OBS: All operations has as PRECOND:
+//        * there is a quell level represented in the Gobstones board 
+// ---------
+function currentQLevel() {
+  let (curMinMoves, found)        := currentQInfo()
+  let (curBoard, curNumPearls)    := currentQBoard()
+  let (curBallMPos, curBoardMDir) := currentQBallInfo()
+  curJewelInfo                    := currentJewel(found)
+  return (QuellLevel(board     <- curBoard
+                   , ball      <- curBallMPos
+                   , inTransit <- curBoardMDir
+                   , numPearls <- curNumPearls
+                   , minMoves  <- curMinMoves
+                   , jewel     <- curJewelInfo))
+}
+
+// Level 1
+function currentQInfo() {
+  GoToCorner(South, West)
+  Assert_OrFail_(numStones(qelemColor()) == 110, msgNoQuellLevel())
+  curMinMoves := currentMNumWith_(attrAColor())
+  found       := currentBoolWith_(attrBColor())
+  return (curMinMoves, found)
+}
+
+function currentQBoard() {
+  GoToCorner(South,East)
+  let (curBoard, curNumPearls) := currentRowInfo()
+  while (canMove(North)) {
+    Move(North)
+    let (rows, numPearls) := currentRowInfo()
+    curBoard     := rows ++ curBoard
+    curNumPearls := curNumPearls + numPearls
+  } 
+  return(curBoard, curNumPearls)
+}
+
+function currentQBallInfo() {
+  GoToBall()
+  return(choose (just(currentPos()), currentMDirWith_(ballColor())) when (hasBall())
+                (Nothing           , Nothing)                       otherwise)
+}
+
+function currentJewel(found) {
+  /* PRECOND: * there is a jewel represented in the board */
+  GoToJewel()
+  return(Jewel(found        <- found
+             , pos          <- currentPos()
+             , hitsReceived <- numStones attrAColor ()-1))
+}
+
+// Level 2
+procedure GoToBall() {
+  StartBoardTraverseTo_And_(East, North)
+  while(not atEndOfBoardTraverseTo_And_(East, North) 
+     && not hasBall()) {
+    GoToNextCellInBoardTraverseTo_And_(East, North) 
+  }
+}
+
+procedure GoToJewel() {
+  StartBoardTraverseTo_And_(East, North)
+  while(not atEndOfBoardTraverseTo_And_(East, North) 
+     && not hasJewel()) {
+    GoToNextCellInBoardTraverseTo_And_(East, North) 
+  }
+}
+
+function curRowInfo() {
+  GoToEdge(West)
+  qelem        := curQElem()
+  curRow       := [ qelem ]
+  curNumPearls := delta(isPearl(qelem))
+  while (canMove(East)) {
+     Move(East)
+     qelem        := curQElem()
+     curRow       := [ qelem ] ++ curRow
+     curNumPearls := curNumPearls + delta(isPearl(qelem))
+  }
+  return ([ curRow ], curNumPearls)
+}
+
+function currentQElem() {
+  /* PRECOND: * there is a qelem represented in the current cell */
+  return(matching (numStones(qelemColor())) select
+          Empty                 on 0
+          Pearl                 on 1
+          Wall                  on 2
+          currentBox()          on 3
+          currentLimit()        on 4
+          currentPortal()       on 5
+          Multispikes           on 6
+          currentSpike()        on 7
+          currentSwitch()       on 8
+          currentGate()         on 9
+          Out                   on 10
+          Out                   on 110
+          boom(msgNoQElement()) otherwise)
+}
+
+function currentBox() {
+  /* PRECOND: * there is a box represented in the current cell */
+  return(Box(gender <- currentGenderWith_(attrAColor())))
+}
+
+function currentLimit() {
+  /* PRECOND: * there is a limit represented in the current cell */
+  return(Limit(corner <- currentMDirWith_(attrAColor())
+             , dir    <- currentMDirWith_(attrBColor())))
+}
+
+function currentPortal() {
+  /* PRECOND: * there is a portal represented in the current cell */
+  return(Portal(doorA <- currentPosWith_(attrAColor())
+              , doorB <- currentPosWith_(attrBColor())))
+}
+
+function currentSpike() {
+  /* PRECOND: * there is a spike represented in the current cell */
+  return(Spike(rotable <- currentBoolWith_(attrAColor())
+             , dir <- currentDirWith_(attrBColor())))
+}
+
+function currentSwitch() {
+  /* PRECOND: * there is a switch represented in the current cell */
+  return(Switch(dir <- currentDirWith_(attrBColor())))
+}
+
+function currentGate() {
+  /* PRECOND: * there is a gate represented in the current cell */
+  return(Gate(open <- currentBoolWith_(attrAColor())))
+}
+
+function hasBall()  { return(num_IsBetween_And_(numStones(ballColor()), 1, 5)       }
+function hasJewel() { return ((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
+function hasWall()  { return(numStones(qelemColor())==2)                            }
+function hasEmpty() { return(numStones(qelemColor())==0)                            }
+
+// ---------
+// Drawing operations
+// ---------
+procedure DrawQLevel_(quell) {
+  EmptyBoard()
+  DrawQInfo_(quell)
+  DrawQBoard_(board(quell))
+  DrawQBall_To_(ball(quell), inTransit(quell))
+  DrawQJewel_(jewel(quell))
+}
+
+// Level 1
+procedure DrawQInfo_(quell) {
+  GoToCorner(South, West)
+  Drop__Times(qelemColor(), 100)
+  DrawMNum_With_(minMoves(quell), attrAColor())
+  DrawBool_With_(found(jewel(quell)), attrBColor())
+}
+
+procedure DrawQBoard_(board) {
+  /* PRECOND: * the board has at least one qelem */
+  GoToCorner(South, West)
+  curBoard := reverse(board)
+  DrawQRow_(head(curBoard))
+  foreach row on tail(curBoard) {
+    Move(South)
+    DrawQRow_(row)
+  }
+}
+
+procedure DrawQBall_To_(ball, mdir) {
+   if (not isNothing(ball)) {
+     pos := fromJust(ball)
+     GoToCell(col(pos), row(pos))
+     DrawBall_(mdir)
+   }
+}
+
+procedure DrawQJewel_(jewel) {
+  GoToCell(col(pos(jewel)), row(pos(jewel)))
+  Drop__Times(attrAColor(), 1+hitsReceived(jewel))
+  DrawBool_With_(found(jewel), attrBColor())
+}
+
+// Level 2
+procedure DrawBall_(mdir) {
+  DrawMDir_With_(mdir, ballColor())
+}
+
+procedure DrawQelem_(qelem) {
+  Drop__Times(qelemColor(), codeOfQelem_(qelem))
+  switch (qelem) {
+    Box(gender)             -> { DrawGender_With_(gender, attrAColor()) }
+    Limit(corner, pointsTo) -> { DrawMDir_With_(corner, attrAColor())
+                                 DrawMDir_With_(poontsTo, attrBColor()) }
+    Portal(doorA, doorB)    -> { DrawPos_With_(doorA, attrAColor())
+                                 DrawPos_With_(doorB, attrBColor())     }
+    Spike(rotable, dir)     -> { DrawBool_With_(rotable, attrAColor())
+                                 DrawDir_With_(dir, attrBColor())       }
+    Switch(dir)             -> { DrawDir_With_(dir, attrBColor())       }
+    Gate(open)              -> { DrawBool_With_(open, attrAColor())     }
+    }
+}
+
+// ---------
+// Codes
+// ---------
+function codeOfQelem_(qelem) {
+  return (matching qelem select
+             0 on Empty
+             1 on Pearl
+             2 on Wall
+             3 on Box
+             4 on Limit
+             5 on Portal
+             6 on Multispikes
+             7 on Spike
+             8 on Switch
+             9 on Gate
+            10 on Out
+            boom(msgNotExpected("QElem")) otherwise
+  )
+}
+
+// ---------
+// Colors
+// ---------
+function ballColor()  { return(Blue)  }
+function qelemColor() { return(Black) }
+function attrAColor() { return(Red)   }
+function attrBColor() { return(Green) }
+
+// ---------
+// Error messages
+// ---------
+function msgNoQuellLevel() { 
+  return(babel("There is no Quell level represented on the board"
+              ,"No hay un nivel de Quell representado en el tablero"))
+}
+
+function msgNoQElement() { 
+  return(babel("There is no QElement represented in the current cell"
+              ,"No hay un QElement representado en la celda actual"))
+}
+
+/* ============================================================================================================
+   END Quell-IO.gbs
+   ============================================================================================================
+*/

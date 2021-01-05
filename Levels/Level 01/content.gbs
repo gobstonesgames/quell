@@ -1,0 +1,26 @@
+program { 
+    DropGreenStones()
+    GoToOriginChangingStones()
+    GrabRedStones()
+    GoToOrigin()
+}
+
+
+procedure DropGreenStones() {
+    repeat (19) {
+        GoToNextCell()
+        DropAGreenStone() 
+    }
+}
+
+procedure GrabRedStones() {    
+    repeat (19) {
+        GoToNextCell()
+        GrabARedStone() 
+    }
+}
+
+procedure GoToOriginChangingStones() {
+    GoToOrigin()
+    ChangeGreenStonesByBlueAndRedStones()
+}
