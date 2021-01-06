@@ -209,6 +209,7 @@ procedure DrawQLevel_(quell) {
   DrawQBoard_(board(quell))
   DrawQBall_To_(ball(quell), inTransit(quell))
   DrawQJewel_(jewel(quell))
+  GoToCorner__(South, West)
 }
 
 // Level 1
