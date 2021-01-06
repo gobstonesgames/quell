@@ -7,4 +7,4 @@ rules:
   - { image: Purple.png    , when: { black: 0, blue: 1, green: 0, red: 1 } }
   - { image: Empty.png     , when: { black: 0, blue: 0, green: 0, red: 0 } }
   - { image: Pearl.png     , when: { black: 1, blue: 0, green: 0, red: 0 } }
-  - { image: Wall.png      , when: { black: 2, blue: 0, green: 0, red: 1 } }
+  - { image: Wall.png      , when: { black: 2, blue: 0, green: 0, red: 0 } }
