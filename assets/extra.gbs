@@ -253,6 +253,14 @@ function just(elem) {
   return (Just(fromJust <- elem))
 }
 
+function firstOf_Or_(md1, md2) {
+ /* PRECOND: * md1 and md2 are not both Nothing */
+ return(matching md1 select
+          fromJust(md1) on Just
+          fromJust(md2) on Nothing)
+}
+
+
 procedure DrawMNum_With_(mNum, color) {
   Drop__Times(color
             , matching (mNum) select
@@ -547,12 +555,15 @@ type QuellLevel is record {
        * minMoves is the minimum number of moves required to solve the level using Quell rules (Nothing if not solvable)
        * the pos at field jewel indicates a valid position in the given board, and the QElem in that position is either Wall or Empty
        * the QElem at SouthWest corner of the board is Out (for drawing information about the level)
+       * either there is any rotable spikes, at least a Switch, and spikeDir should be different from Nothing, 
+             or there is no rotable spikes, no Switches, and spikeDir is Nothing
    */
    field board     // [[QElem]] 
    field ball      // Maybe(Pos)
    field inTransit // Maybe(Dir)
    field numPearls // Number
    field minMoves  // Maybe(Number)
+   field spikesDir // Maybe(Direction)
    field jewel     // QJewel
 }
 
@@ -560,19 +571,17 @@ type QElem is variant {
    case Empty      {}
    case Pearl      {}
    case Wall       {}
-   case Box        { field gender }    // Gender
-   case Limit      { field corner      // Maybe((Dir, Dir))
-                     field pointsTo    // Maybe(Dir)
+   case Box        { field gender }     // Gender
+   case Limit      { field corner       // Maybe((Dir, Dir))
+                     field pointsTo     // Maybe(Dir)
                    }
-   case Portal     { field doorA       // Pos
-                     field doorB       // Pos
+   case Portal     { field doorA        // Pos
+                     field doorB        // Pos
                    }
    case Multispike {}
-   case Spike      { field rotable     // Bool
-                     field dir         // Direction
-                   }
-   case Switch     { field dir }       // Direction
-   case Gate       { field open }      // Bool
+   case Spike      { field notRotable } // Maybe(Dir)
+   case Switch     { } 
+   case Gate       { field open }       // Bool
    case Out        {}
 }
 
@@ -588,6 +597,9 @@ type BallAction is variant {
   case Pop  {}
 }
 
+// ---------------------------
+//  Abbreviations
+// ---------------------------
 function cNW()     { return(Limit(corner   <- just((East , South)), pointsTo <- Nothing))   }
 function cNE()     { return(Limit(corner   <- just((South, West )), pointsTo <- Nothing))   }
 function cSE()     { return(Limit(corner   <- just((West , North)), pointsTo <- Nothing))   }
@@ -611,10 +623,43 @@ function aSW_(dir) { return(Limit(corner   <- just((East , North)), pointsTo <- 
 function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 
-function isPearl_(qelem) {
+// ---------------------------
+//  Detection functions
+// ---------------------------
+function isEmpty_(qelem)      { return(matching (qelem) select True  on Empty       False otherwise) }
+function isPearl_(qelem)      { return(matching (qelem) select True  on Pearl       False otherwise) }
+function isWall_(qelem)       { return(matching (qelem) select True  on Wall        False otherwise) }
+function isBox_(qelem)        { return(matching (qelem) select True  on Box         False otherwise) }
+function isLimit_(qelem)      { return(matching (qelem) select True  on Limit       False otherwise) }
+function isPortal_(qelem)     { return(matching (qelem) select True  on Portal      False otherwise) }
+function isMultispike_(qelem) { return(matching (qelem) select True  on Multispike  False otherwise) }
+function isSpike_(qelem)      { return(matching (qelem) select True  on Spike       False otherwise) }
+function isSwitch_(qelem)     { return(matching (qelem) select True  on Switch      False otherwise) }
+function isGate_(qelem)       { return(matching (qelem) select True  on Gate        False otherwise) }
+function isOut_(qelem)        { return(matching (qelem) select True  on Out         False otherwise) }
+
+function isRotableSpike(qelem) {
   return(matching (qelem) select 
-           True  on Pearl
-           False otherwise)
+           isRotable_(qelem) on Spike
+           False             otherwise)
+}
+
+function isRotable_(qelem) {
+  /* PRECOND: qelem is a Spike */
+   return(notRotable(qelem)==Nothing)
+}
+
+// ---------------------------
+//  Ball information
+// ---------------------------
+function dirOfBallOn_(quell)    { return(inTransit(quell))                           }
+function hasQBall_(quell)       { return(not isNothing(ball(quell)))                 }
+function hasMovingQBall_(quell) { return(hasQBall_(quell) && ballAt_IsMoving(quell)) }
+function ballOn_IsMoving(quell) { return(not isNothing (inTransit(quell)))           }
+
+function ballPosOn_(quell) {
+  /* PRECOND: * there is a Ball in quell (ball(quell) is not Nothing) */
+  return (fromJust(ball(quell)))
 }
 /* ============================================================================================================
    END QuellRepresentation.gbs
@@ -669,9 +714,7 @@ procedure WriteQuell_(quell) {
     + Multispike, 6 stones
     + Spike,      7 stones
                      * rotable,  attrA stones 
-                     * dir,      atrrB stones
     + Switch,     8 stones
-                     * dir,      attrB stones
     + Gate,       9 stones
                      * open,     attrA stones
     + Out,       10 stones (or 110 for special case)
@@ -679,6 +722,7 @@ procedure WriteQuell_(quell) {
    QLevel info is represented at SouthWestWest corner with 110 qelem stones and 
     + attrA stones to indicate minMoves of the level
     + attrB stones to indicate if jewel was found
+    + the field spikesDir is indicated with attrA stones at all Switches, if it is different from Nothing
 
   The jewel is represented on its position if it was not found, using
     + hitsReceived, attrA stones
@@ -690,15 +734,16 @@ procedure WriteQuell_(quell) {
 //        * there is a quell level represented in the Gobstones board 
 // ---------
 function currentQLevel() {
-  let (curMinMoves, found)        := currentQInfo()
-  let (curBoard, curNumPearls)    := currentQBoard()
-  let (curBallMPos, curBoardMDir) := currentQBallInfo()
-  curJewelInfo                    := currentQJewel(found)
+  let (curMinMoves, found)                   := currentQInfo()
+  let (curBoard, curNumPearls, curSpikesDir) := currentQBoard()
+  let (curBallMPos, curBoardMDir)            := currentQBallInfo()
+  curJewelInfo                               := currentQJewel(found)
   return (QuellLevel(board     <- curBoard
                    , ball      <- curBallMPos
                    , inTransit <- curBoardMDir
                    , numPearls <- curNumPearls
                    , minMoves  <- curMinMoves
+                   , spikesDir <- curSpikesDir
                    , jewel     <- curJewelInfo))
 }
 
@@ -713,14 +758,15 @@ function currentQInfo() {
 
 function currentQBoard() {
   GoToCorner__(South,East)
-  let (curBoard, curNumPearls) := currentRowInfo()
+  let (curBoard, curNumPearls, curSpikesDir) := currentRowInfo()
   while (canMove(North)) {
     Move(North)
-    let (rows, numPearls) := currentRowInfo()
+    let (rows, numPearls, newSpikesDir) := currentRowInfo()
+    curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
     curBoard     := rows ++ curBoard
     curNumPearls := curNumPearls + numPearls
   } 
-  return(curBoard, curNumPearls)
+  return(curBoard, curNumPearls, curSpikesDir)
 }
 
 function currentQBallInfo() {
@@ -756,20 +802,22 @@ procedure GoToQJewel() {
 
 function currentRowInfo() {
   GoToEdge(West)
-  qelem        := currentQElem()
+  (qelem, curSpikesDir) := currentQElem()
   curRow       := [ qelem ]
   curNumPearls := delta(isPearl_(qelem))
   while (canMove(East)) {
      Move(East)
-     qelem        := currentQElem()
+     (qelem, newSpikesDir) := currentQElem()
+     curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
      curRow       := [ qelem ] ++ curRow
      curNumPearls := curNumPearls + delta(isPearl_(qelem))
   }
-  return ([ curRow ], curNumPearls)
+  return ([ curRow ], curNumPearls, curSpikesDir)
 }
 
 function currentQElem() {
   /* PRECOND: * there is a qelem represented in the current cell */
+  
   return(matching (numStones(qelemColor())) select
           Empty                 on 0
           Pearl                 on 1
@@ -783,7 +831,9 @@ function currentQElem() {
           currentGate()         on 9
           Out                   on 10
           Out                   on 110
-          boom(msgNoQElement()) otherwise)
+          boom(msgNoQElement()) otherwise, 
+      , choose currentMDirWith_(attrAColor()) when (numStones(qelemColor()) == 7) 
+               Nothing                        otherwise)
 }
 
 function currentBox() {
@@ -805,13 +855,12 @@ function currentPortal() {
 
 function currentSpike() {
   /* PRECOND: * there is a spike represented in the current cell */
-  return(Spike(rotable <- currentBoolWith_(attrAColor())
-             , dir <- currentDirWith_(attrBColor())))
+  return(Spike(rotable <- currentMDirWith_(attrAColor())))
 }
 
 function currentSwitch() {
   /* PRECOND: * there is a switch represented in the current cell */
-  return(Switch(dir <- currentDirWith_(attrBColor())))
+  return(Switch)
 }
 
 function currentGate() {
@@ -837,10 +886,9 @@ function hasEmpty()  { return(numStones(qelemColor())==0)                       
 procedure DrawQLevel_(quell) {
   ClearBoard()
   DrawQInfo_(quell)
-  DrawQBoard_(board(quell))
-  DrawQBall_To_(ball(quell), inTransit(quell))
+  DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQJewel_(jewel(quell))
-  GoToCorner__(South, West)
+  DrawQBall_To_(ball(quell), inTransit(quell))
 }
 
 // Level 1
@@ -851,14 +899,14 @@ procedure DrawQInfo_(quell) {
   DrawBool_With_(found(jewel(quell)), attrBColor())
 }
 
-procedure DrawQBoard_(board) {
+procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
   /* PRECOND: * the board has at least one qelem */
   GoToCorner__(South, West)
   curBoard := reverse(board)
-  DrawQRow_(head(curBoard))
+  DrawQRow_WithSpikesTo_(head(curBoard), spikesDir)
   foreach row in tail(curBoard) {
     Move(North)
-    DrawQRow_(row)
+    DrawQRow_WithSpikesTo_(row, spikesDir)
   }
 }
 
@@ -881,33 +929,32 @@ procedure DrawBall_(mdir) {
   DrawMDir_With_(mdir, ballColor())
 }
 
-procedure DrawQRow_(row) {
+procedure DrawQRow_WithSpikesTo_(row, spikesDir) {
   /* PRECOND: * the row has at least one element */
   GoToEdge(West)
-  DrawQelem_(head(row))
+  DrawQelem_WithSpikesTo_(head(row), spikesDir)
   foreach qelem in tail(row) {
     Move(East)
-    DrawQelem_(qelem)  
+    DrawQelem_WithSpikesTo_(qelem, spikesDir)  
   }
 }
 
-procedure DrawQelem_(qelem) {
+procedure DrawQelem_WithSpikesTo_(qelem, spikesDir) {
   Drop__Times(qelemColor(), codeOfQelem_(qelem))
   switch (qelem) to {
-    Box(gender)             -> { DrawGender_With_(gender, attrAColor()) }
-    Limit(corner, pointsTo) -> { DrawCorner_With_(corner, attrAColor())
-                                 DrawMDir_With_(pointsTo, attrBColor()) }
-    Portal(doorA, doorB)    -> { DrawPos_With_(doorA, attrAColor())
-                                 DrawPos_With_(doorB, attrBColor())     }
-    Spike(rotable, dir)     -> { DrawBool_With_(rotable, attrAColor())
-                                 DrawDir_With_(dir, attrBColor())       }
-    Switch(dir)             -> { DrawDir_With_(dir, attrBColor())       }
-    Gate(open)              -> { DrawBool_With_(open, attrAColor())     }
+    Box(gender)             -> { DrawGender_With_(gender   , attrAColor()) }
+    Limit(corner, pointsTo) -> { DrawCorner_With_(corner   , attrAColor())
+                                 DrawMDir_With_  (pointsTo , attrBColor()) }
+    Portal(doorA, doorB)    -> { DrawPos_With_   (doorA    , attrAColor())
+                                 DrawPos_With_   (doorB    , attrBColor()) }
+    Spike(rotable)          -> { DrawMDir_With_  (rotable  , attrAColor()) }
+    Switch()                -> { DrawMDir_With_  (spikesDir, attrAColor()) }
+    Gate(open)              -> { DrawBool_With_  (open     , attrAColor()) }
     _                       -> { }
     }
 }
 
-procedure DrawCorner_With_(corner, color) {
+procedure DrawCorner_With(corner, color) {
   switch (corner) to {
     Nothing    -> { Drop__Times(color, 9) }
     Just(d1d2) -> { d1 := fst(d1d2)
