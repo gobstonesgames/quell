@@ -25,12 +25,15 @@ type QuellLevel is record {
        * minMoves is the minimum number of moves required to solve the level using Quell rules (Nothing if not solvable)
        * the pos at field jewel indicates a valid position in the given board, and the QElem in that position is either Wall or Empty
        * the QElem at SouthWest corner of the board is Out (for drawing information about the level)
+       * either there is any rotable spikes, at least a Switch, and spikeDir should be different from Nothing, 
+             or there is no rotable spikes, no Switches, and spikeDir is Nothing
    */
    field board     // [[QElem]] 
    field ball      // Maybe(Pos)
    field inTransit // Maybe(Dir)
    field numPearls // Number
    field minMoves  // Maybe(Number)
+   field spikesDir // Maybe(Direction)
    field jewel     // QJewel
 }
 
@@ -38,19 +41,17 @@ type QElem is variant {
    case Empty      {}
    case Pearl      {}
    case Wall       {}
-   case Box        { field gender }    // Gender
-   case Limit      { field corner      // Maybe((Dir, Dir))
-                     field pointsTo    // Maybe(Dir)
+   case Box        { field gender }     // Gender
+   case Limit      { field corner       // Maybe((Dir, Dir))
+                     field pointsTo     // Maybe(Dir)
                    }
-   case Portal     { field doorA       // Pos
-                     field doorB       // Pos
+   case Portal     { field doorA        // Pos
+                     field doorB        // Pos
                    }
    case Multispike {}
-   case Spike      { field rotable     // Bool
-                     field dir         // Direction
-                   }
-   case Switch     { field dir }       // Direction
-   case Gate       { field open }      // Bool
+   case Spike      { field notRotable } // Maybe(Dir)
+   case Switch     { } 
+   case Gate       { field open }       // Bool
    case Out        {}
 }
 
@@ -66,6 +67,9 @@ type BallAction is variant {
   case Pop  {}
 }
 
+// ---------------------------
+//  Abbreviations
+// ---------------------------
 function cNW()     { return(Limit(corner   <- just((East , South)), pointsTo <- Nothing))   }
 function cNE()     { return(Limit(corner   <- just((South, West )), pointsTo <- Nothing))   }
 function cSE()     { return(Limit(corner   <- just((West , North)), pointsTo <- Nothing))   }
@@ -89,10 +93,43 @@ function aSW_(dir) { return(Limit(corner   <- just((East , North)), pointsTo <- 
 function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 
-function isPearl_(qelem) {
+// ---------------------------
+//  Detection functions
+// ---------------------------
+function isEmpty_(qelem)      { return(matching (qelem) select True  on Empty       False otherwise) }
+function isPearl_(qelem)      { return(matching (qelem) select True  on Pearl       False otherwise) }
+function isWall_(qelem)       { return(matching (qelem) select True  on Wall        False otherwise) }
+function isBox_(qelem)        { return(matching (qelem) select True  on Box         False otherwise) }
+function isLimit_(qelem)      { return(matching (qelem) select True  on Limit       False otherwise) }
+function isPortal_(qelem)     { return(matching (qelem) select True  on Portal      False otherwise) }
+function isMultispike_(qelem) { return(matching (qelem) select True  on Multispike  False otherwise) }
+function isSpike_(qelem)      { return(matching (qelem) select True  on Spike       False otherwise) }
+function isSwitch_(qelem)     { return(matching (qelem) select True  on Switch      False otherwise) }
+function isGate_(qelem)       { return(matching (qelem) select True  on Gate        False otherwise) }
+function isOut_(qelem)        { return(matching (qelem) select True  on Out         False otherwise) }
+
+function isRotableSpike(qelem) {
   return(matching (qelem) select 
-           True  on Pearl
-           False otherwise)
+           isRotable_(qelem) on Spike
+           False             otherwise)
+}
+
+function isRotable_(qelem) {
+  /* PRECOND: qelem is a Spike */
+   return(notRotable(qelem)==Nothing)
+}
+
+// ---------------------------
+//  Ball information
+// ---------------------------
+function dirOfBallOn_(quell)    { return(inTransit(quell))                           }
+function hasQBall_(quell)       { return(not isNothing(ball(quell)))                 }
+function hasMovingQBall_(quell) { return(hasQBall_(quell) && ballAt_IsMoving(quell)) }
+function ballOn_IsMoving(quell) { return(not isNothing (inTransit(quell)))           }
+
+function ballPosOn_(quell) {
+  /* PRECOND: * there is a Ball in quell (ball(quell) is not Nothing) */
+  return (fromJust(ball(quell)))
 }
 /* ============================================================================================================
    END QuellRepresentation.gbs
