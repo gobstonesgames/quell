@@ -58,8 +58,8 @@ procedure Grab(color) {
     Sacar(colorEn2Sp(color)) 
 }
 
-function nextColor(color)  { return(siguiente(colorEn2Sp(dir))) }
-function prevColor(color)  { return(previo(colorEn2Sp(dir)))    }
+function nextColor(color)  { return(colorSp2En(siguiente(colorEn2Sp(dir)))) }
+function prevColor(color)  { return(colorSp2En(previo(colorEn2Sp(dir))))    }
 
 function minColour() { return(colorSp2En(minColor())) }
 function maxColour() { return(colorSp2En(maxColor())) }
@@ -99,9 +99,9 @@ procedure Move(dir) {
 
 procedure GoToEdge(dir) { IrAlBorde(dirEn2Sp(dir)) }
 
-function opposite(dir) { return(opuesto(dirEn2Sp(dir)))   }
-function nextDir(dir)  { return(siguiente(dirEn2Sp(dir))) }
-function prevDir(dir)  { return(previo(dirEn2Sp(dir)))    }
+function opposite(dir) { return(dirSp2En(opuesto(dirEn2Sp(dir))))   }
+function nextDir(dir)  { return(dirSp2En(siguiente(dirEn2Sp(dir)))) }
+function prevDir(dir)  { return(dirSp2En(previo(dirEn2Sp(dir))))    }
 
 function minDirection() { return(dirSp2En(minDir())) }
 function maxDirection() { return(dirSp2En(maxDir())) }

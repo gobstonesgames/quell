@@ -35,6 +35,71 @@ function delta(b) {
 }
 
 // ---------
+// Coding functions 
+// ---------
+
+// Dir
+procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
+function codeOfDir_(dir) {
+  return (matching (dir) select
+            1 on North
+            2 on East
+            3 on South
+            4 on West
+            boom(msgNotExpected("Direction")) otherwise)
+}
+
+function currentDirWith_(color) {
+  /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
+  return(decodedDir_(numStones(color)))
+}
+
+function decodedDir_(code) {
+  /* PRECOND: * code is the coding of a Dir (between 1 and 4) */
+  return(matching (code) select
+           North on 1
+           East  on 2
+           South on 3
+           West  on 4
+           boom(msgNotACodeFor_("Direction")) otherwise)
+}
+
+// Bool
+procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
+function codeOfBool_(b) {
+  return (choose 1 when (b)
+                 0 otherwise)
+}
+
+function currentBoolWith_(color) {
+  /* PRECOND: * there is a bool represented in the current cell with the given color */
+  return(decodedBool_(numStones(color)))
+}
+
+function decodedBool_(code) {
+  /* PRECOND: * code is the coding of a Bool (either 0 or 1) */
+  return(matching (code) select
+           True   on 1
+           False  on 0
+           boom(msgNotACodeFor_("Bool")) otherwise)
+}
+
+// ---------
+// Pairs
+// ---------
+function fst(pair) {
+    return(matching (pair) select 
+               x on (x,y)
+               boom("Cannot happen") otherwise)
+}
+
+function snd(pair) {
+    return(matching (pair) select 
+               y on (x,y)
+               boom("Cannot happen") otherwise)
+}
+
+// ---------
 // Maybe 
 // ---------
 type Maybe is variant {
@@ -291,56 +356,6 @@ function listFrom_To_(low,high) {
     current := current + 1
   }
   return (processed)
-}
-
-// ---------
-// Coding functions 
-// ---------
-
-// Dir
-procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
-function codeOfDir_(dir) {
-  return (matching (dir) select
-            1 on North
-            2 on East
-            3 on South
-            4 on West
-            boom(msgNotExpected("Direction")) otherwise)
-}
-
-function currentDirWith_(color) {
-  /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
-  return(decodedDir_(numStones(color)))
-}
-
-function decodedDir_(code) {
-  /* PRECOND: * code is the coding of a Dir (between 1 and 4) */
-  return(matching (code) select
-           North on 1
-           East  on 2
-           South on 3
-           West  on 4
-           boom(msgNotACodeFor_("Direction")) otherwise)
-}
-
-// Bool
-procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
-function codeOfBool_(b) {
-  return (choose 1 when (b)
-                 0 otherwise)
-}
-
-function currentBoolWith_(color) {
-  /* PRECOND: * there is a bool represented in the current cell with the given color */
-  return(decodedBool_(numStones(color)))
-}
-
-function decodedBool_(code) {
-  /* PRECOND: * code is the coding of a Bool (either 0 or 1) */
-  return(matching (code) select
-           True   on 1
-           False  on 0
-           boom(msgNotACodeFor_("Bool")) otherwise)
 }
 
 // ---------

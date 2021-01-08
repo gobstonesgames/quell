@@ -37,7 +37,7 @@ procedure WriteQuell_(quell) {
     + Wall,       2 stones
     + Box,        3 stones
     + Limit,      4 stones
-                     * isCorner, attrA stones
+                     * isCorner, attrA stones (1-4 for corners, 5-8 for angles)
                      * pointsTo, attrB stones 
     + Portal, 5 stones
                      * doorA,    attrA stones
@@ -169,7 +169,7 @@ function currentBox() {
 
 function currentLimit() {
   /* PRECOND: * there is a limit represented in the current cell */
-  return(Limit(corner   <- currentMDirWith_(attrAColor())
+  return(Limit(corner   <- currentCornerWith_(attrAColor())
              , pointsTo <- currentMDirWith_(attrBColor())))
 }
 
@@ -193,6 +193,13 @@ function currentSwitch() {
 function currentGate() {
   /* PRECOND: * there is a gate represented in the current cell */
   return(Gate(open <- currentBoolWith_(attrAColor())))
+}
+
+function currentCornerWith_(color) { 
+  code := numStones(color)
+  return(choose Nothing             when (code==9)
+                decodedDir_(code-4) when (num_IsBetween_And_(code, 5, 8))
+                decodedDir_(code)   otherwise)
 }
 
 function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
@@ -262,9 +269,9 @@ procedure DrawQRow_(row) {
 
 procedure DrawQelem_(qelem) {
   Drop__Times(qelemColor(), codeOfQelem_(qelem))
-  switch (qelem) {
+  switch (qelem) to {
     Box(gender)             -> { DrawGender_With_(gender, attrAColor()) }
-    Limit(corner, pointsTo) -> { DrawMDir_With_(corner, attrAColor())
+    Limit(corner, pointsTo) -> { DrawCorner_With_(corner, attrAColor())
                                  DrawMDir_With_(pointsTo, attrBColor()) }
     Portal(doorA, doorB)    -> { DrawPos_With_(doorA, attrAColor())
                                  DrawPos_With_(doorB, attrBColor())     }
@@ -274,6 +281,18 @@ procedure DrawQelem_(qelem) {
     Gate(open)              -> { DrawBool_With_(open, attrAColor())     }
     _                       -> { }
     }
+}
+
+procedure DrawCorner_With(corner, color) {
+  switch (corner) to {
+    Nothing    -> { Drop__Times(color, 9) }
+    Just(d1d2) -> { d1 := fst(d1d2)
+                    d2 := snd(d1d2)
+                    if     (d2==nextDir(d1)) { DrawDir_With_(d1,color)              }
+                    elseif (d2==prevDir(d1)) { Drop__Times(color, 4+codeOfDir_(d1)) }
+                    else                     { BOOM(msgInvalidQuell())              }
+                  }
+  }
 }
 
 // ---------
@@ -315,6 +334,11 @@ function msgNoQuellLevel() {
 function msgNoQElement() { 
   return(babel("There is no QElement represented in the current cell"
               ,"No hay un QElement representado en la celda actual"))
+}
+
+function msgInvalidQuell() { 
+  return(babel("Quell representation is invalid"
+              ,"La representación de Quell es inválida"))
 }
 
 /* ============================================================================================================

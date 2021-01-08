@@ -58,8 +58,8 @@ procedure Grab(color) {
     Sacar(colorEn2Sp(color)) 
 }
 
-function nextColor(color)  { return(siguiente(colorEn2Sp(dir))) }
-function prevColor(color)  { return(previo(colorEn2Sp(dir)))    }
+function nextColor(color)  { return(colorSp2En(siguiente(colorEn2Sp(dir)))) }
+function prevColor(color)  { return(colorSp2En(previo(colorEn2Sp(dir))))    }
 
 function minColour() { return(colorSp2En(minColor())) }
 function maxColour() { return(colorSp2En(maxColor())) }
@@ -99,9 +99,9 @@ procedure Move(dir) {
 
 procedure GoToEdge(dir) { IrAlBorde(dirEn2Sp(dir)) }
 
-function opposite(dir) { return(opuesto(dirEn2Sp(dir)))   }
-function nextDir(dir)  { return(siguiente(dirEn2Sp(dir))) }
-function prevDir(dir)  { return(previo(dirEn2Sp(dir)))    }
+function opposite(dir) { return(dirSp2En(opuesto(dirEn2Sp(dir))))   }
+function nextDir(dir)  { return(dirSp2En(siguiente(dirEn2Sp(dir)))) }
+function prevDir(dir)  { return(dirSp2En(previo(dirEn2Sp(dir))))    }
 
 function minDirection() { return(dirSp2En(minDir())) }
 function maxDirection() { return(dirSp2En(maxDir())) }
@@ -168,6 +168,71 @@ function num_IsBetween_And_(n, low, high) { return(n>=low && n<=high)  }
 function delta(b) {
   return (choose 1 when (b)
                  0 otherwise) 
+}
+
+// ---------
+// Coding functions 
+// ---------
+
+// Dir
+procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
+function codeOfDir_(dir) {
+  return (matching (dir) select
+            1 on North
+            2 on East
+            3 on South
+            4 on West
+            boom(msgNotExpected("Direction")) otherwise)
+}
+
+function currentDirWith_(color) {
+  /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
+  return(decodedDir_(numStones(color)))
+}
+
+function decodedDir_(code) {
+  /* PRECOND: * code is the coding of a Dir (between 1 and 4) */
+  return(matching (code) select
+           North on 1
+           East  on 2
+           South on 3
+           West  on 4
+           boom(msgNotACodeFor_("Direction")) otherwise)
+}
+
+// Bool
+procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
+function codeOfBool_(b) {
+  return (choose 1 when (b)
+                 0 otherwise)
+}
+
+function currentBoolWith_(color) {
+  /* PRECOND: * there is a bool represented in the current cell with the given color */
+  return(decodedBool_(numStones(color)))
+}
+
+function decodedBool_(code) {
+  /* PRECOND: * code is the coding of a Bool (either 0 or 1) */
+  return(matching (code) select
+           True   on 1
+           False  on 0
+           boom(msgNotACodeFor_("Bool")) otherwise)
+}
+
+// ---------
+// Pairs
+// ---------
+function fst(pair) {
+    return(matching (pair) select 
+               x on (x,y)
+               boom("Cannot happen") otherwise)
+}
+
+function snd(pair) {
+    return(matching (pair) select 
+               y on (x,y)
+               boom("Cannot happen") otherwise)
 }
 
 // ---------
@@ -430,56 +495,6 @@ function listFrom_To_(low,high) {
 }
 
 // ---------
-// Coding functions 
-// ---------
-
-// Dir
-procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
-function codeOfDir_(dir) {
-  return (matching (dir) select
-            1 on North
-            2 on East
-            3 on South
-            4 on West
-            boom(msgNotExpected("Direction")) otherwise)
-}
-
-function currentDirWith_(color) {
-  /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
-  return(decodedDir_(numStones(color)))
-}
-
-function decodedDir_(code) {
-  /* PRECOND: * code is the coding of a Dir (between 1 and 4) */
-  return(matching (code) select
-           North on 1
-           East  on 2
-           South on 3
-           West  on 4
-           boom(msgNotACodeFor_("Direction")) otherwise)
-}
-
-// Bool
-procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
-function codeOfBool_(b) {
-  return (choose 1 when (b)
-                 0 otherwise)
-}
-
-function currentBoolWith_(color) {
-  /* PRECOND: * there is a bool represented in the current cell with the given color */
-  return(decodedBool_(numStones(color)))
-}
-
-function decodedBool_(code) {
-  /* PRECOND: * code is the coding of a Bool (either 0 or 1) */
-  return(matching (code) select
-           True   on 1
-           False  on 0
-           boom(msgNotACodeFor_("Bool")) otherwise)
-}
-
-// ---------
 // Stacks 
 // ---------
 type Stack is record {
@@ -503,6 +518,7 @@ function msgNotACodeFor_(element) {
    END Prelude.gbs
    ============================================================================================================
 */
+
 
 /* ============================================================================================================
    START QuellRepresentation.gbs
@@ -545,7 +561,7 @@ type QElem is variant {
    case Pearl      {}
    case Wall       {}
    case Box        { field gender }    // Gender
-   case Limit      { field corner      // Maybe(Dir)
+   case Limit      { field corner      // Maybe((Dir, Dir))
                      field pointsTo    // Maybe(Dir)
                    }
    case Portal     { field doorA       // Pos
@@ -572,15 +588,25 @@ type BallAction is variant {
   case Pop  {}
 }
 
-function cNW()     { return(Limit(corner   <- just(East) , pointsTo <- Nothing))   }
-function cNE()     { return(Limit(corner   <- just(South), pointsTo <- Nothing))   }
-function cSE()     { return(Limit(corner   <- just(West) , pointsTo <- Nothing))   }
-function cSW()     { return(Limit(corner   <- just(North), pointsTo <- Nothing))   }
+function cNW()     { return(Limit(corner   <- just((East , South)), pointsTo <- Nothing))   }
+function cNE()     { return(Limit(corner   <- just((South, West )), pointsTo <- Nothing))   }
+function cSE()     { return(Limit(corner   <- just((West , North)), pointsTo <- Nothing))   }
+function cSW()     { return(Limit(corner   <- just((North, East )), pointsTo <- Nothing))   }
 
-function cNW_(dir) { return(Limit(corner   <- just(East) , pointsTo <- just(dir))) }
-function cNE_(dir) { return(Limit(corner   <- just(South), pointsTo <- just(dir))) }
-function cSE_(dir) { return(Limit(corner   <- just(West) , pointsTo <- just(dir))) }
-function cSW_(dir) { return(Limit(corner   <- just(North), pointsTo <- just(dir))) }
+function cNW_(dir) { return(Limit(corner   <- just((East , South)), pointsTo <- just(dir))) }
+function cNE_(dir) { return(Limit(corner   <- just((South, West )), pointsTo <- just(dir))) }
+function cSE_(dir) { return(Limit(corner   <- just((West , North)), pointsTo <- just(dir))) }
+function cSW_(dir) { return(Limit(corner   <- just((North, East )), pointsTo <- just(dir))) }
+
+function aNW()     { return(Limit(corner   <- just((South, East )), pointsTo <- Nothing))   }
+function aNE()     { return(Limit(corner   <- just((West , South)), pointsTo <- Nothing))   }
+function aSE()     { return(Limit(corner   <- just((North, West )), pointsTo <- Nothing))   }
+function aSW()     { return(Limit(corner   <- just((East , North)), pointsTo <- Nothing))   }
+
+function aNW_(dir) { return(Limit(corner   <- just((South, East )), pointsTo <- just(dir))) }
+function aNE_(dir) { return(Limit(corner   <- just((West , South)), pointsTo <- just(dir))) }
+function aSE_(dir) { return(Limit(corner   <- just((North, West )), pointsTo <- just(dir))) }
+function aSW_(dir) { return(Limit(corner   <- just((East , North)), pointsTo <- just(dir))) }
 
 function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
@@ -594,6 +620,7 @@ function isPearl_(qelem) {
    END QuellRepresentation.gbs
    ============================================================================================================
 */
+
 
 /* ============================================================================================================
    START Quell-IO.gbs
@@ -634,7 +661,7 @@ procedure WriteQuell_(quell) {
     + Wall,       2 stones
     + Box,        3 stones
     + Limit,      4 stones
-                     * isCorner, attrA stones
+                     * isCorner, attrA stones (1-4 for corners, 5-8 for angles)
                      * pointsTo, attrB stones 
     + Portal, 5 stones
                      * doorA,    attrA stones
@@ -766,7 +793,7 @@ function currentBox() {
 
 function currentLimit() {
   /* PRECOND: * there is a limit represented in the current cell */
-  return(Limit(corner   <- currentMDirWith_(attrAColor())
+  return(Limit(corner   <- currentCornerWith_(attrAColor())
              , pointsTo <- currentMDirWith_(attrBColor())))
 }
 
@@ -790,6 +817,13 @@ function currentSwitch() {
 function currentGate() {
   /* PRECOND: * there is a gate represented in the current cell */
   return(Gate(open <- currentBoolWith_(attrAColor())))
+}
+
+function currentCornerWith_(color) { 
+  code := numStones(color)
+  return(choose Nothing             when (code==9)
+                decodedDir_(code-4) when (num_IsBetween_And_(code, 5, 8))
+                decodedDir_(code)   otherwise)
 }
 
 function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
@@ -859,9 +893,9 @@ procedure DrawQRow_(row) {
 
 procedure DrawQelem_(qelem) {
   Drop__Times(qelemColor(), codeOfQelem_(qelem))
-  switch (qelem) {
+  switch (qelem) to {
     Box(gender)             -> { DrawGender_With_(gender, attrAColor()) }
-    Limit(corner, pointsTo) -> { DrawMDir_With_(corner, attrAColor())
+    Limit(corner, pointsTo) -> { DrawCorner_With_(corner, attrAColor())
                                  DrawMDir_With_(pointsTo, attrBColor()) }
     Portal(doorA, doorB)    -> { DrawPos_With_(doorA, attrAColor())
                                  DrawPos_With_(doorB, attrBColor())     }
@@ -871,6 +905,18 @@ procedure DrawQelem_(qelem) {
     Gate(open)              -> { DrawBool_With_(open, attrAColor())     }
     _                       -> { }
     }
+}
+
+procedure DrawCorner_With_(corner, color) {
+  switch (corner) to {
+    Nothing    -> { Drop__Times(color, 9) }
+    Just(d1d2) -> { d1 := fst(d1d2)
+                    d2 := snd(d1d2)
+                    if     (d2==nextDir(d1)) { DrawDir_With_(d1,color)              }
+                    elseif (d2==prevDir(d1)) { Drop__Times(color, 4+codeOfDir_(d1)) }
+                    else                     { BOOM(msgInvalidQuell())              }
+                  }
+  }
 }
 
 // ---------
@@ -914,8 +960,12 @@ function msgNoQElement() {
               ,"No hay un QElement representado en la celda actual"))
 }
 
+function msgInvalidQuell() { 
+  return(babel("Quell representation is invalid"
+              ,"La representación de Quell es inválida"))
+}
+
 /* ============================================================================================================
    END Quell-IO.gbs
    ============================================================================================================
 */
-

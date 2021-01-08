@@ -39,7 +39,7 @@ type QElem is variant {
    case Pearl      {}
    case Wall       {}
    case Box        { field gender }    // Gender
-   case Limit      { field corner      // Maybe(Dir)
+   case Limit      { field corner      // Maybe((Dir, Dir))
                      field pointsTo    // Maybe(Dir)
                    }
    case Portal     { field doorA       // Pos
@@ -66,15 +66,25 @@ type BallAction is variant {
   case Pop  {}
 }
 
-function cNW()     { return(Limit(corner   <- just(East) , pointsTo <- Nothing))   }
-function cNE()     { return(Limit(corner   <- just(South), pointsTo <- Nothing))   }
-function cSE()     { return(Limit(corner   <- just(West) , pointsTo <- Nothing))   }
-function cSW()     { return(Limit(corner   <- just(North), pointsTo <- Nothing))   }
+function cNW()     { return(Limit(corner   <- just((East , South)), pointsTo <- Nothing))   }
+function cNE()     { return(Limit(corner   <- just((South, West )), pointsTo <- Nothing))   }
+function cSE()     { return(Limit(corner   <- just((West , North)), pointsTo <- Nothing))   }
+function cSW()     { return(Limit(corner   <- just((North, East )), pointsTo <- Nothing))   }
 
-function cNW_(dir) { return(Limit(corner   <- just(East) , pointsTo <- just(dir))) }
-function cNE_(dir) { return(Limit(corner   <- just(South), pointsTo <- just(dir))) }
-function cSE_(dir) { return(Limit(corner   <- just(West) , pointsTo <- just(dir))) }
-function cSW_(dir) { return(Limit(corner   <- just(North), pointsTo <- just(dir))) }
+function cNW_(dir) { return(Limit(corner   <- just((East , South)), pointsTo <- just(dir))) }
+function cNE_(dir) { return(Limit(corner   <- just((South, West )), pointsTo <- just(dir))) }
+function cSE_(dir) { return(Limit(corner   <- just((West , North)), pointsTo <- just(dir))) }
+function cSW_(dir) { return(Limit(corner   <- just((North, East )), pointsTo <- just(dir))) }
+
+function aNW()     { return(Limit(corner   <- just((South, East )), pointsTo <- Nothing))   }
+function aNE()     { return(Limit(corner   <- just((West , South)), pointsTo <- Nothing))   }
+function aSE()     { return(Limit(corner   <- just((North, West )), pointsTo <- Nothing))   }
+function aSW()     { return(Limit(corner   <- just((East , North)), pointsTo <- Nothing))   }
+
+function aNW_(dir) { return(Limit(corner   <- just((South, East )), pointsTo <- just(dir))) }
+function aNE_(dir) { return(Limit(corner   <- just((West , South)), pointsTo <- just(dir))) }
+function aSE_(dir) { return(Limit(corner   <- just((North, West )), pointsTo <- just(dir))) }
+function aSW_(dir) { return(Limit(corner   <- just((East , North)), pointsTo <- just(dir))) }
 
 function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
