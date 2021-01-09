@@ -124,7 +124,7 @@ function isRotable_(qelem) {
 // ---------------------------
 function dirOfBallOn_(quell)    { return(inTransit(quell))                           }
 function hasQBall_(quell)       { return(not isNothing(ball(quell)))                 }
-function hasMovingQBall_(quell) { return(hasQBall_(quell) && ballAt_IsMoving(quell)) }
+function hasMovingQBall_(quell) { return(hasQBall_(quell) && ballOn_IsMoving(quell)) }
 function ballOn_IsMoving(quell) { return(not isNothing (inTransit(quell)))           }
 
 function ballPosOn_(quell) {

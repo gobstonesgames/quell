@@ -5,6 +5,7 @@ function level() {
    , inTransit <- Nothing
    , numPearls <- 4
    , minMoves  <- just(3)
+   , spkiesDir <- Nothing
    , jewel     <- QJewel(
                       jpos         <- pos(3,9)
                     , hitsReceived <- 0 

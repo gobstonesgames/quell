@@ -255,9 +255,9 @@ function just(elem) {
 
 function firstOf_Or_(md1, md2) {
  /* PRECOND: * md1 and md2 are not both Nothing */
- return(matching md1 select
+ return(matching (md1) select
           fromJust(md1) on Just
-          fromJust(md2) on Nothing)
+          fromJust(md2) otherwise)
 }
 
 
@@ -802,12 +802,12 @@ procedure GoToQJewel() {
 
 function currentRowInfo() {
   GoToEdge(West)
-  (qelem, curSpikesDir) := currentQElem()
+  let (qelem, curSpikesDir) := currentQElem()
   curRow       := [ qelem ]
   curNumPearls := delta(isPearl_(qelem))
   while (canMove(East)) {
      Move(East)
-     (qelem, newSpikesDir) := currentQElem()
+     let (qelem, newSpikesDir) := currentQElem()
      curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
      curRow       := [ qelem ] ++ curRow
      curNumPearls := curNumPearls + delta(isPearl_(qelem))
@@ -831,7 +831,7 @@ function currentQElem() {
           currentGate()         on 9
           Out                   on 10
           Out                   on 110
-          boom(msgNoQElement()) otherwise, 
+          boom(msgNoQElement()) otherwise 
       , choose currentMDirWith_(attrAColor()) when (numStones(qelemColor()) == 7) 
                Nothing                        otherwise)
 }
@@ -855,7 +855,7 @@ function currentPortal() {
 
 function currentSpike() {
   /* PRECOND: * there is a spike represented in the current cell */
-  return(Spike(rotable <- currentMDirWith_(attrAColor())))
+  return(Spike(notRotable <- currentMDirWith_(attrAColor())))
 }
 
 function currentSwitch() {
@@ -954,7 +954,7 @@ procedure DrawQelem_WithSpikesTo_(qelem, spikesDir) {
     }
 }
 
-procedure DrawCorner_With(corner, color) {
+procedure DrawCorner_With_(corner, color) {
   switch (corner) to {
     Nothing    -> { Drop__Times(color, 9) }
     Just(d1d2) -> { d1 := fst(d1d2)

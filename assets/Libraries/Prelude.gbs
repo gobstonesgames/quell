@@ -119,9 +119,9 @@ function just(elem) {
 
 function firstOf_Or_(md1, md2) {
  /* PRECOND: * md1 and md2 are not both Nothing */
- return(matching md1 select
+ return(matching (md1) select
           fromJust(md1) on Just
-          fromJust(md2) on Nothing)
+          fromJust(md2) otherwise)
 }
 
 
