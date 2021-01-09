@@ -29,12 +29,14 @@ type QuellLevel is record {
              or there is no rotable spikes, no Switches, and spikeDir is Nothing
    */
    field board     // [[QElem]] 
+   field spikesDir // Maybe(Direction)
+   field jewel     // QJewel
    field ball      // Maybe(Pos)
    field inTransit // Maybe(Dir)
    field numPearls // Number
+   field solution  // [Dir]
    field minMoves  // Maybe(Number)
-   field spikesDir // Maybe(Direction)
-   field jewel     // QJewel
+   field numMoves  // Number
 }
 
 type QElem is variant {
@@ -90,8 +92,8 @@ function aNE_(dir) { return(Limit(corner   <- just((West , South)), pointsTo <- 
 function aSE_(dir) { return(Limit(corner   <- just((North, West )), pointsTo <- just(dir))) }
 function aSW_(dir) { return(Limit(corner   <- just((East , North)), pointsTo <- just(dir))) }
 
-function lH_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
-function lV_(dir)   { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
+function lH_(dir)  { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
+function lV_(dir)  { return(Limit(corner   <- Nothing    , pointsTo <- just(dir))) }
 
 // ---------------------------
 //  Detection functions

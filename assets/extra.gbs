@@ -254,10 +254,9 @@ function just(elem) {
 }
 
 function firstOf_Or_(md1, md2) {
- /* PRECOND: * md1 and md2 are not both Nothing */
  return(matching (md1) select
-          fromJust(md1) on Just
-          fromJust(md2) otherwise)
+          md1 on Just
+          md2 otherwise)
 }
 
 
@@ -300,7 +299,7 @@ type Pos is record {
    field col    // Number
 }
 
-function pos(r, c) { return(Pos(row <- r, col<-c)) }
+function pos(c, r) { return(Pos(row <- r, col <- c)) }
 
 procedure GoToCell_(pos) {
   GoToEdge(West)      
@@ -339,7 +338,7 @@ function vOffset (dir) {
 function hOffset (dir) {
   return (matching (dir) select
             -1 on West
-             1 on South
+             1 on East
              0 otherwise) 
 }
 
@@ -435,6 +434,12 @@ function elemAtIndex_In_(idx,xs) {
   return(list_At_(xs,idx)) 
 }
 
+function lengthOf_(xs) {
+  counted := 0
+  foreach elem in xs { counted := counted+1 }
+  return (counted)
+}
+
 function list_At_(xs, idx) {
   /* PRECOND: * there are at least 1+idx elements in xs */
   currentList := xs
@@ -472,7 +477,7 @@ function split_At_(xs, i) {
   seen := [ ]
   toSee := xs
   repeat (i) { 
-     seen := seen ++ head(toSee)
+     seen := seen ++ [ head(toSee) ]
      toSee := tail(toSee)
   }
   return(seen, head(toSee), tail(toSee))
@@ -559,12 +564,14 @@ type QuellLevel is record {
              or there is no rotable spikes, no Switches, and spikeDir is Nothing
    */
    field board     // [[QElem]] 
+   field spikesDir // Maybe(Direction)
+   field jewel     // QJewel
    field ball      // Maybe(Pos)
    field inTransit // Maybe(Dir)
    field numPearls // Number
+   field solution  // [Dir]
    field minMoves  // Maybe(Number)
-   field spikesDir // Maybe(Direction)
-   field jewel     // QJewel
+   field numMoves  // Number
 }
 
 type QElem is variant {
@@ -674,6 +681,7 @@ function ballPosOn_(quell) {
 // REQUIRE: Prelude.gbs
 // REQUIRE: QuellRepresentation.gbs
    ============================================================================================================
+   TO-DO: Add a top bar to the board representation (in order to add the solution, the numMoves, and represent spikesDir in a better way)
 */
 
 // ---------
@@ -739,12 +747,14 @@ function currentQLevel() {
   let (curBallMPos, curBoardMDir)            := currentQBallInfo()
   curJewelInfo                               := currentQJewel(found)
   return (QuellLevel(board     <- curBoard
+                   , spikesDir <- curSpikesDir
+                   , jewel     <- curJewelInfo
                    , ball      <- curBallMPos
                    , inTransit <- curBoardMDir
                    , numPearls <- curNumPearls
+                   , solution  <- []             // TO FIX!!
                    , minMoves  <- curMinMoves
-                   , spikesDir <- curSpikesDir
-                   , jewel     <- curJewelInfo))
+                   , numMoves  <- 0))
 }
 
 // Level 1
@@ -758,12 +768,13 @@ function currentQInfo() {
 
 function currentQBoard() {
   GoToCorner__(South,East)
-  let (curBoard, curNumPearls, curSpikesDir) := currentRowInfo()
+  let (row, curNumPearls, curSpikesDir) := currentRowInfo()
+  curBoard := [ row ]
   while (canMove(North)) {
     Move(North)
-    let (rows, numPearls, newSpikesDir) := currentRowInfo()
+    let (row, numPearls, newSpikesDir) := currentRowInfo()
     curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
-    curBoard     := rows ++ curBoard
+    curBoard     := curBoard ++ [ row ]
     curNumPearls := curNumPearls + numPearls
   } 
   return(curBoard, curNumPearls, curSpikesDir)
@@ -779,7 +790,7 @@ function currentQJewel(found) {
   /* PRECOND: * there is a jewel represented in the board */
   GoToQJewel()
   return(QJewel(found        <- found
-              , jpos          <- currentPos()
+              , jpos         <- currentPos()
               , hitsReceived <- numStones(attrAColor())-1))
 }
 
@@ -809,10 +820,10 @@ function currentRowInfo() {
      Move(East)
      let (qelem, newSpikesDir) := currentQElem()
      curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
-     curRow       := [ qelem ] ++ curRow
+     curRow       := curRow ++ [ qelem ]
      curNumPearls := curNumPearls + delta(isPearl_(qelem))
   }
-  return ([ curRow ], curNumPearls, curSpikesDir)
+  return (curRow, curNumPearls, curSpikesDir)
 }
 
 function currentQElem() {
@@ -870,9 +881,15 @@ function currentGate() {
 
 function currentCornerWith_(color) { 
   code := numStones(color)
-  return(choose Nothing             when (code==9)
-                decodedDir_(code-4) when (num_IsBetween_And_(code, 5, 8))
-                decodedDir_(code)   otherwise)
+  if (num_IsBetween_And_(code, 1, 4)) 
+    { d1 := decodedDir_(code) 
+      d2 := nextDir(d1)   
+  } elseif (num_IsBetween_And_(code, 5, 8)) 
+    { d2 := decodedDir_(code-4)
+      d1 := nextDir(d2)        
+  } else { }                                      
+  return(choose just((d1,d2)) when (num_IsBetween_And_(code, 1, 8))
+                Nothing       otherwise)
 }
 
 function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
@@ -902,7 +919,7 @@ procedure DrawQInfo_(quell) {
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
   /* PRECOND: * the board has at least one qelem */
   GoToCorner__(South, West)
-  curBoard := reverse(board)
+  curBoard := board
   DrawQRow_WithSpikesTo_(head(curBoard), spikesDir)
   foreach row in tail(curBoard) {
     Move(North)
@@ -960,7 +977,7 @@ procedure DrawCorner_With_(corner, color) {
     Just(d1d2) -> { d1 := fst(d1d2)
                     d2 := snd(d1d2)
                     if     (d2==nextDir(d1)) { DrawDir_With_(d1,color)              }
-                    elseif (d2==prevDir(d1)) { Drop__Times(color, 4+codeOfDir_(d1)) }
+                    elseif (d2==prevDir(d1)) { Drop__Times(color, 4+codeOfDir_(d2)) }
                     else                     { BOOM(msgInvalidQuell())              }
                   }
   }
@@ -1014,5 +1031,304 @@ function msgInvalidQuell() {
 
 /* ============================================================================================================
    END Quell-IO.gbs
+   ============================================================================================================
+*/
+
+
+/* ============================================================================================================
+   START QuellOperations.gbs
+   Operations to perform a step of movement (with all the needed changes)
+// REQUIRE: Babel.gbs
+// REQUIRE: Prelude.gbs
+// REQUIRE: QuellRepresentation.gbs
+// REQUIRE: Quell-IO.gbs
+   ============================================================================================================
+*/
+procedure ProcessMoveTo_(mdir) {
+  quell    := currentQuell()
+  newQuell := quell_WithOneStepTo_(quell, mdir)
+  WriteQuell_(newQuell)
+}
+
+// ---------
+// Quell operative functions
+// ---------
+function quell_WithOneStepTo_(quell, mdir) {
+  /* OBS: If the ball is moving, dir is ignored. If there is no ball, there is nothing to do. */
+  newQuell := quell
+  if (hasMovingQBall_(newQuell) || stepAt_StartsMoveTo_(newQuell, mdir)) {
+    // Determine the direction of movement, and adjust solution if a movement starts
+    if (hasMovingQBall_(newQuell)) 
+      { dirOfMove := fromJust(dirOfBallOn_(newQuell)) }
+    else
+      { dirOfMove := fromJust(mdir)
+        newQuell  := quell_WithAdjustedSolutionFor_(newQuell, dirOfMove)
+      }
+
+    let (curPos, curQE)   := currentDataOn_(newQuell)      
+    let (nextPos, nextQE) := nextDataOn_From_To_(newQuell, curPos, dirOfMove)
+
+   // COMPLETAR     
+   //    If nextQE is a box, calculate its immediate next      
+   // Mejorar el análisis de adjusted
+   // let (dirOfMove, nextQE, nextPos) :=  adjusted_And_In_WRT_In_On_(dirOfMove, nextQE, nextPos, curQE, curPos, newQuell)
+    
+    action       := whatHappensIn_MovingTo_On_(nextQE, dirOfMove, newQuell)
+    globalAction := globalActionFrom_On_(nextQE, newQuell)
+    newQuell     := afterAction_On_With_At_And_At_To_(action, newQuell, curQE, curPos, nextQE, nextPos, dirOfMove)
+    newQuell     := afterGlobal_On_(globalAction, newQuell)
+  }
+  return(newQuell)
+}
+
+function quell_WithAdjustedSolutionFor_(quell, dirOfMove) {
+  /* PRECOND: there is a ball */
+   newSolution := solution(quell)
+   if (not isEmpty(newSolution) && head(newSolution) == dirOfMove)
+        { newSolution := tail(newSolution) }
+   else { newSolution := []                }
+   return(QuellLevel(quell | solution <- newSolution, numMoves <- numMoves(quell) + 1))
+}
+
+// ---------
+// Topological determination of data
+// ---------
+function currentDataOn_(quell) {
+  pos := ballPosOn_(quell)
+  return(pos, elemAtPos_In_(pos, board(quell)))
+}
+
+function nextDataOn_From_To_(quell, pos, dir) {
+  /* PURPOSE: calculates the next position and element for balls AND boxes */
+  let (nextPos, nextQE) := neighborDataOn_From_To_(quell, pos, dir)
+
+  // The next of a limit is the next of the matching limit. This control has to be first, in case that next is a Portal
+  if (isLimit_(nextQE)) {
+    newPos  := matchingLimitFor_At_To_In_(nextQE, nextPos, dir, board(quell))
+    nextPos := nextPosOf_To_(newPos, dir)      
+    nextQE  := elemAtPos_In_(nextPos, board(quell))
+  }
+
+  // Entering a portal always ends in the target
+  if (isPortal_(nextQE)) {
+    nextPos := targetOf_From_(nextQE, nextPos)
+    nextQE  := elemAtPos_In_(nextPos, board(quell))
+  }
+
+  return (nextPos, nextQE)
+}
+
+function neighborDataOn_From_To_(quell, pos, dir) {
+  neighPos := nextPosOf_To_(pos, dir)
+  return(neighPos, elemAtPos_In_(neighPos, board(quell)))
+}
+
+// ---------
+// Other
+// ---------
+function adjusted_And_In_WRT_In_On_(dir, next, nextPos, current, curPos, quell) {
+  /* OBS: the 3 checks are sequential to allow complex configurations (i.e. a portal besides another portal with a Limit besides its target) */
+  curDir      := dir
+  curlNextPos := nextPos
+  curlNext    := next
+  
+  if (isPortal_(current) && isBlocking_(curNext) && not isDangerous_From_On_(curNext, curDir, quell)) {
+    curDir     := opposite (curDir)
+    newPos     := targetOf_From_(current, curPos)
+    curNextPos := nextPosOf_To_(newPos, curDir)
+    curNext    := elemAtPos_In_(curNextPos, board(quell))
+  }
+  
+  if (isPortal_(curNext)) {
+    curNextPos := targetOf_From_(curNext, curNextPos)
+    curNext    := elemAtPos_In_(curNextPos, board(quell))
+  } 
+
+  if (isLimit_(curNext)) {
+    newPos     := matchingLimitFor_At_To_In_(curNext, curNextPos, curDir, board(quell))
+    curNextPos := nextPosOf_To_(newPos, curDir)      
+    curNext    := elemAtPos_In_(curNextPos, board(quell))
+  }
+  
+  return (curDir, curNext, curNextPos)
+}
+
+function whatHappensIn_MovingTo_On_(qelem, dir, quell) {
+  return (choose Pop  when (isDangerous_From_On_(qelem, dir, quell))
+                 Stay when (isBlocking_(qelem))
+                 Move otherwise
+  )
+}
+
+function globalActionFrom_On_(qelem, quell) {
+  return (matching (qelem) select
+            spikesDir(quell) on Switch
+            Nothing          otherwise)
+}
+
+function afterAction_On_With_At_And_At_To_(action, quell, current, curPos, next, nextPos, dir) {
+    switch (action) {
+       Pop  -> { newQuell := QuellLevel(quell | inTransit <- Nothing, ball <- Nothing) }
+       Stay -> { newQuell := QuellLevel(quell | inTransit <- Nothing)
+                 newQuell := withAdjustedJewelAt_On_(nextPos, newQuell)
+               }
+       Move -> { newQuell := QuellLevel(quell| inTransit <- just(dir), ball <- just(nextPos))
+                 newQuell := withNew_At_And_At_To_On_(current, curPos, next, nextPos, dir, newQuell)
+                 newQuell := withAdjustedJewelAt_On_(nextPos, newQuell)
+               }
+     }
+    return (newQuell)
+}
+
+function afterGlobal_On_(gaction, quell) {
+    return (matching (gaction) select
+              QuellLevel(quell | spikesDir <- fromJust(gaction)) on Just
+              quell                                              otherwise)
+}
+
+function withNew_At_And_At_To_On_(current, curPos, next, nextPos, dir, quell) {
+   newCurrent := elem_AfterLeaving(current)
+   newNext    := elem_AfterEnterFrom_(next, dir)
+   newBoard   := set_AtPos_To_(set_AtPos_To_(board(quell)
+                                           , curPos, newCurrent)
+                             , nextPos, newNext)
+   return (QuellLevel(quell | board     <- newBoard
+                            , numPearls <- adjustPearls(numPearls(quell), next))
+      )
+ }
+
+function withAdjustedJewelAt_On_(pos, quell) {
+  jewel    := jewel(quell)
+  hits     := hitsReceived(jewel)
+  newJewel := QJewel(jewel | hitsReceived <- (1+hits) mod 3
+                          , found <- hits==2)
+  return (choose QuellLevel (quell | jewel <- newJewel)  when (not found(jewel) && pos==jpos(jewel))
+                 quell                                   otherwise)
+}
+           
+function elem_AfterEnterFrom_(qelem, dir) {
+  return (matching (qelem) select
+            Empty on Pearl
+            qelem otherwise)
+}
+
+function elem_AfterLeaving(qelem) {
+  return (matching (qelem) select
+            Gate(open <- False) on Gate
+            qelem               otherwise
+  )
+}
+
+function adjustPearls (num, qelem) {
+  return(matching (qelem) select
+           num-1 on Pearl
+           num otherwise)
+}
+
+// ---------
+// Basic Quell functions
+// ---------
+function stepAt_StartsMoveTo_(quell, mdir) { return (hasQBall_(quell) && not ballOn_IsMoving(quell) && not isNothing(mdir)) }
+
+function isDangerous_From_On_(qelem, dir, quell) {
+  return(matching (qelem) select
+           dirOfSpikesOf_At_(qelem, quell)==opposite(dir) on Spike
+           True                                           on Multispike
+           False                                          otherwise)
+}
+
+function dirOfSpikesOf_At_(qelem, quell) {
+  /* PRECOND: qelem is a Spike */
+  return(choose spikesDir(quell)             when (isRotable_(qelem))
+                fromJust(notRotable(qelem)) otherwise)
+}
+
+function isBlocking_(qelem) {
+  return(matching (qelem) select
+           True            on Wall
+           True            on Spike
+           True            on Multispike
+           not open(qelem) on Gate
+           False           otherwise)
+}
+
+function targetOf_From_(qportal, pos) {
+  /* PRECOND: * qportal is a Portal */
+ return (choose doorA(qportal) when (doorB(qportal)==pos)
+                doorB(qportal) when (doorA(qportal)==pos)
+                pos            otherwise)
+}
+
+// ---------
+// Functions for Limits
+// ---------
+function matchingLimitFor_At_To_In_(qelem, pos, dir, board) {
+  /* PRECOND:
+       * the qelem in board at pos is a Limit pointing to other limit
+       * board is the board of a valid QLevel
+  */
+ return(choose
+          Pos (row <- row(pos)
+              ,col <- indexOfLimitNotAt_In_(col(pos), elemAtIndex_In_(row(pos), board)))    when (isHorizontal(dir)) 
+          Pos (row <- indexOfLimitNotAt_In_(row(pos), column_Of_(col(pos)     , board))
+              ,col <- col(pos))                                                             otherwise)
+}
+
+function indexOfLimitNotAt_In_(idx, qs) {
+  /* PRECOND: * there are at least two Limits in qs pointing to each other, one of them at pos */
+  let (before, qelem, after) := split_At_(qs, idx)
+  Assert_OrFail_ (isLimit_(qelem), msgNotALimit())
+  if (pointsBackwards_(qelem)) 
+       { let (matchingIdx, matchingQE) := firstLimitBackwardsIn_(before)
+         Assert_OrFail_(pointsForwards_(matchingQE), msgMalformedBoard())
+       }
+  elseif (pointsForwards_(qelem)) 
+       { let (matchingIdx, matchingQE) := firstLimitForwardsIn_(after)
+         Assert_OrFail_(pointsBackwards_(matchingQE), msgMalformedBoard())
+         matchingIdx := matchingIdx + idx + 1
+       }
+  else { BOOM(msgNotABorder()) }
+  return(matchingIdx)
+}
+
+function pointsBackwards_(qelem) {
+  dir := pointsTo(qelem)
+  return(dir == just(South) || dir == just(West))
+}
+
+function pointsForwards_(qelem) {
+  dir := pointsTo(qelem)
+  return(dir == just(North) || dir == just(East))
+}
+
+function firstLimitBackwardsIn_(qs) {
+  /* PRECOND: qs has a Limit */
+  let (idx, qelem) := firstLimitForwardsIn_(reverse(qs))
+  return (idx+lengthOf_(qs)-1, qelem)
+}
+
+function firstLimitForwardsIn_(qs) {
+  /* PRECOND: qs has a Limit */
+   idx     := 0
+   qelem   := head(qs)
+   current := tail(qs)
+   while(not isLimit_(qelem)) {
+     idx     := idx + 1
+     qelem   := head(current)
+     current := tail(current)
+   }
+   return(idx, qelem)
+}
+
+// ---------
+// Error messages
+// ---------
+function msgMalformedBoard() { return(babel("Malformed board", "Tablero mal formado"))          }
+function msgNotALimit()      { return(babel("QElement at the given position is not a Limit"
+                                          , "El QElement en la posición dada no es un Límite")) }
+function msgNotABorder()     { return(babel("Limit at the given position is not a border"
+                                          , "El Límite en la posición dada no es un borde"))    }
+/* ============================================================================================================
+   END QuellOperations.gbs
    ============================================================================================================
 */

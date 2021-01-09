@@ -118,10 +118,9 @@ function just(elem) {
 }
 
 function firstOf_Or_(md1, md2) {
- /* PRECOND: * md1 and md2 are not both Nothing */
  return(matching (md1) select
-          fromJust(md1) on Just
-          fromJust(md2) otherwise)
+          md1 on Just
+          md2 otherwise)
 }
 
 
@@ -164,7 +163,7 @@ type Pos is record {
    field col    // Number
 }
 
-function pos(r, c) { return(Pos(row <- r, col<-c)) }
+function pos(c, r) { return(Pos(row <- r, col <- c)) }
 
 procedure GoToCell_(pos) {
   GoToEdge(West)      
@@ -203,7 +202,7 @@ function vOffset (dir) {
 function hOffset (dir) {
   return (matching (dir) select
             -1 on West
-             1 on South
+             1 on East
              0 otherwise) 
 }
 
@@ -299,6 +298,12 @@ function elemAtIndex_In_(idx,xs) {
   return(list_At_(xs,idx)) 
 }
 
+function lengthOf_(xs) {
+  counted := 0
+  foreach elem in xs { counted := counted+1 }
+  return (counted)
+}
+
 function list_At_(xs, idx) {
   /* PRECOND: * there are at least 1+idx elements in xs */
   currentList := xs
@@ -336,7 +341,7 @@ function split_At_(xs, i) {
   seen := [ ]
   toSee := xs
   repeat (i) { 
-     seen := seen ++ head(toSee)
+     seen := seen ++ [ head(toSee) ]
      toSee := tail(toSee)
   }
   return(seen, head(toSee), tail(toSee))

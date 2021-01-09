@@ -5,6 +5,7 @@
 // REQUIRE: Prelude.gbs
 // REQUIRE: QuellRepresentation.gbs
    ============================================================================================================
+   TO-DO: Add a top bar to the board representation (in order to add the solution, the numMoves, and represent spikesDir in a better way)
 */
 
 // ---------
@@ -70,12 +71,14 @@ function currentQLevel() {
   let (curBallMPos, curBoardMDir)            := currentQBallInfo()
   curJewelInfo                               := currentQJewel(found)
   return (QuellLevel(board     <- curBoard
+                   , spikesDir <- curSpikesDir
+                   , jewel     <- curJewelInfo
                    , ball      <- curBallMPos
                    , inTransit <- curBoardMDir
                    , numPearls <- curNumPearls
+                   , solution  <- []             // TO FIX!!
                    , minMoves  <- curMinMoves
-                   , spikesDir <- curSpikesDir
-                   , jewel     <- curJewelInfo))
+                   , numMoves  <- 0))
 }
 
 // Level 1
@@ -89,12 +92,13 @@ function currentQInfo() {
 
 function currentQBoard() {
   GoToCorner__(South,East)
-  let (curBoard, curNumPearls, curSpikesDir) := currentRowInfo()
+  let (row, curNumPearls, curSpikesDir) := currentRowInfo()
+  curBoard := [ row ]
   while (canMove(North)) {
     Move(North)
-    let (rows, numPearls, newSpikesDir) := currentRowInfo()
+    let (row, numPearls, newSpikesDir) := currentRowInfo()
     curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
-    curBoard     := rows ++ curBoard
+    curBoard     := curBoard ++ [ row ]
     curNumPearls := curNumPearls + numPearls
   } 
   return(curBoard, curNumPearls, curSpikesDir)
@@ -110,7 +114,7 @@ function currentQJewel(found) {
   /* PRECOND: * there is a jewel represented in the board */
   GoToQJewel()
   return(QJewel(found        <- found
-              , jpos          <- currentPos()
+              , jpos         <- currentPos()
               , hitsReceived <- numStones(attrAColor())-1))
 }
 
@@ -140,10 +144,10 @@ function currentRowInfo() {
      Move(East)
      let (qelem, newSpikesDir) := currentQElem()
      curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
-     curRow       := [ qelem ] ++ curRow
+     curRow       := curRow ++ [ qelem ]
      curNumPearls := curNumPearls + delta(isPearl_(qelem))
   }
-  return ([ curRow ], curNumPearls, curSpikesDir)
+  return (curRow, curNumPearls, curSpikesDir)
 }
 
 function currentQElem() {
@@ -201,9 +205,15 @@ function currentGate() {
 
 function currentCornerWith_(color) { 
   code := numStones(color)
-  return(choose Nothing             when (code==9)
-                decodedDir_(code-4) when (num_IsBetween_And_(code, 5, 8))
-                decodedDir_(code)   otherwise)
+  if (num_IsBetween_And_(code, 1, 4)) 
+    { d1 := decodedDir_(code) 
+      d2 := nextDir(d1)   
+  } elseif (num_IsBetween_And_(code, 5, 8)) 
+    { d2 := decodedDir_(code-4)
+      d1 := nextDir(d2)        
+  } else { }                                      
+  return(choose just((d1,d2)) when (num_IsBetween_And_(code, 1, 8))
+                Nothing       otherwise)
 }
 
 function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
@@ -233,7 +243,7 @@ procedure DrawQInfo_(quell) {
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
   /* PRECOND: * the board has at least one qelem */
   GoToCorner__(South, West)
-  curBoard := reverse(board)
+  curBoard := board
   DrawQRow_WithSpikesTo_(head(curBoard), spikesDir)
   foreach row in tail(curBoard) {
     Move(North)

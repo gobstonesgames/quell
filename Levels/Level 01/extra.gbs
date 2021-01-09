@@ -1,20 +1,19 @@
 function level() {
   return(QuellLevel(
-     board     <- board01() 
-   , ball      <- just(pos(4,3))
+     board     <- reverse(boardT01())
+   , spikesDir <- Nothing
+   , jewel     <- QJewel(jpos <- pos(9,3), hitsReceived <- 0, found <- True)
+   , ball      <- just(pos(3,4))
    , inTransit <- Nothing
    , numPearls <- 4
+   , solution  <- [South, East, North]
    , minMoves  <- just(3)
-   , spikesDir <- Nothing
-   , jewel     <- QJewel(
-                      jpos         <- pos(3,9)
-                    , hitsReceived <- 0 
-                    , found        <- True
-  )))
+   , numMoves  <- 0
+  ))
 }
 
-function board01() { 
-  // [[QElem]], size=pos(8,15)
+function boardT01() { 
+  // [[QElem]], size=pos(15,8)
   return(
    [[Out       , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        , Out        , Out        , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        ]
    ,[cNW()     , aSE_(East) , Wall       , Wall       , Wall       , aSW()      , cNE()      , Out        , cNW()      , aSE()      , Wall       , Wall       , Wall       , aSW()      , cNE()      ]
