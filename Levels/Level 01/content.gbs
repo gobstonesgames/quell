@@ -1,13 +1,15 @@
-// interactive program {
-//   INIT       -> { WriteQuell_(level())        }
-//   K_DOWN     -> { ProcessMoveTo_(just(South)) }
-//   K_UP       -> { ProcessMoveTo_(just(North)) }
-//   K_LEFT     -> { ProcessMoveTo_(just(West))  }    
-//   K_RIGHT    -> { ProcessMoveTo_(just(East))  }
-//   TIMEOUT(1) -> { ProcessMoveTo_(Nothing)     }
-// }
+interactive program {
+  INIT       -> { WriteQuell_(level())        }
+  K_DOWN     -> { ProcessMoveTo_(just(South)) }
+  K_UP       -> { ProcessMoveTo_(just(North)) }
+  K_LEFT     -> { ProcessMoveTo_(just(West))  }    
+  K_RIGHT    -> { ProcessMoveTo_(just(East))  }
+  TIMEOUT(1) -> { ProcessMoveTo_(Nothing)     }
+}
 
+/*
 program {
   WriteQuell_(level())
   // ProcessMoveTo_(just(South))
 }
+*/
