@@ -2,7 +2,7 @@ attire:
   active: Quell
   user_permissions:
     can_toggle_visibility: false
-  visible: false
+  visible: true
 board:
   active: 1
   initial_board_source: selected

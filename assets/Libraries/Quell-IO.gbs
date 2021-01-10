@@ -211,8 +211,8 @@ function currentCornerWith_(color) {
     { d1 := decodedDir_(code) 
       d2 := nextDir(d1)   
   } elseif (num_IsBetween_And_(code, 5, 8)) 
-    { d2 := decodedDir_(code-4)
-      d1 := nextDir(d2)        
+    { d1 := decodedDir_(code-4)
+      d2 := prevDir(d1)   
   } else { }                                      
   return(choose just((d1,d2)) when (num_IsBetween_And_(code, 1, 8))
                 Nothing       otherwise)

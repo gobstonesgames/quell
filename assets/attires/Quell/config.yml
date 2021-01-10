@@ -17,10 +17,10 @@ rules:
   - { image: CornerNE.png  , when: { black:   4, blue: 0, green: '*', red:   3 } }
   - { image: CornerSW.png  , when: { black:   4, blue: 0, green: '*', red:   1 } }
   - { image: CornerSE.png  , when: { black:   4, blue: 0, green: '*', red:   4 } }
-  - { image: AngleNW.png   , when: { black:   4, blue: 0, green: '*', red:   6 } }
-  - { image: AngleNE.png   , when: { black:   4, blue: 0, green: '*', red:   7 } }
-  - { image: AngleSW.png   , when: { black:   4, blue: 0, green: '*', red:   5 } }
-  - { image: AngleSE.png   , when: { black:   4, blue: 0, green: '*', red:   8 } }
+  - { image: AngleNW.png   , when: { black:   4, blue: 0, green: '*', red:   7 } }
+  - { image: AngleNE.png   , when: { black:   4, blue: 0, green: '*', red:   8 } }
+  - { image: AngleSW.png   , when: { black:   4, blue: 0, green: '*', red:   6 } }
+  - { image: AngleSE.png   , when: { black:   4, blue: 0, green: '*', red:   5 } }
   - { image: Out.png       , when: { black:  10, blue: 0, green:   0, red:   0 } }
   - { image: TopEmpty.png  , when: { black: 100, blue: 0, green: '*', red: '*' } }
   - { image: TopEmpty.png  , when: { black: 101, blue: 0, green: '*', red: '*' } }
