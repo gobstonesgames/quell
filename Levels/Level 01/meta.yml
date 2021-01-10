@@ -1,6 +1,4 @@
 name: 'Quell, level 1'
-attire:
-  active: none
 blocks:
   disabled: []
   visible:  ["Just run the code"]
@@ -14,6 +12,4 @@ inherit:
   execution_speed: true
   library: true
   board: true
-  attire:
-    user_permissions: true
-    visible: true
+  attire: true

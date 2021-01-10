@@ -1,14 +1,15 @@
 attire:
+  active: Quell
   user_permissions:
-    can_toggle_visibility: true
-  visible: true
+    can_toggle_visibility: false
+  visible: false
 board:
   active: 1
   initial_board_source: selected
-  visible_edition: true
+  visible_edition: false
   collapse_toolbox: false
   user_permissions:
-    can_view_attire_section: true
+    can_view_attire_section: false
     can_edit_board: false
     can_change_initial_board: false
     can_change_initial_board_source: false
@@ -16,7 +17,7 @@ board:
 execution_speed:
   active: instantaneous
   user_permissions:
-    can_change_speed: true
+    can_change_speed: false
 library:
   visible: false
 blocks:

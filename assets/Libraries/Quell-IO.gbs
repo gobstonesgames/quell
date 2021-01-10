@@ -51,10 +51,16 @@ procedure WriteQuell_(quell) {
                      * open,     attrA stones
     + Out,       10 stones (or 110 for special case)
   
-   QLevel info is represented at SouthWestWest corner with 110 qelem stones and 
-    + attrA stones to indicate minMoves of the level
-    + attrB stones to indicate if jewel was found
-    + the field spikesDir is indicated with attrA stones at all Switches, if it is different from Nothing
+  QLevel info is represented at top row with 10x qelem stones (x the col Number) -- TO BE DONE
+    * cell  0 at column 0 encode spikesDir in attrA stones
+    * cell  1 at column 1 encode numMoves in attrA stones (100 for overload)
+    * cell  2 at column 2 encode minMoves in attrA stones (100 for overload)
+    * cell  0 at column 3 encode jewel position in attrAStones
+    * cells 3 (or 0 if not used) from column 4 to 3-from-East encode solution in attrA and attrB stones 
+           ([Dir] is encoded as a 0-less number in base 4, represented in base 100 in low first pairs of digits in order AB)
+    * cell  4 at column 2 from East encode if jewel was found in attrB stones
+    * cell  5 at column 1 from East encode numPearls in attrA stones
+    * cell  0 at East edge with no extra information
 
   The jewel is represented on its position if it was not found, using
     + hitsReceived, attrA stones
@@ -66,42 +72,50 @@ procedure WriteQuell_(quell) {
 //        * there is a quell level represented in the Gobstones board 
 // ---------
 function currentQLevel() {
-  let (curMinMoves, found)                   := currentQInfo()
-  let (curBoard, curNumPearls, curSpikesDir) := currentQBoard()
-  let (curBallMPos, curBoardMDir)            := currentQBallInfo()
-  curJewelInfo                               := currentQJewel(found)
+  let (curSpikesDir, curNumMoves, curMinMoves
+      ,curJewelPos, curJewelFound, curSolution
+      ,curNumPearls)                         := currentQInfo()
+  let (curBoard, checkNumPearls)             := currentQBoard()
+  let (curBallMPos, curBallMDir)             := currentQBallInfo()
+  curJewelInfo                               := currentQJewel(curJewelFound, curJewelPos)
+  Assert_OrFail_(curNumPearls==checkNumPearls, msgInvalidQuell())
   return (QuellLevel(board     <- curBoard
                    , spikesDir <- curSpikesDir
                    , jewel     <- curJewelInfo
                    , ball      <- curBallMPos
-                   , inTransit <- curBoardMDir
+                   , inTransit <- curBallMDir
                    , numPearls <- curNumPearls
-                   , solution  <- []             // TO FIX!!
+                   , solution  <- curSolution
                    , minMoves  <- curMinMoves
-                   , numMoves  <- 0))
+                   , numMoves  <- curNumMoves))
 }
 
 // Level 1
 function currentQInfo() {
-  GoToCorner__(South, West)
-  Assert_OrFail_(numStones(qelemColor()) == 110, msgNoQuellLevel())
-  curMinMoves := currentMNumWith_(attrAColor())
-  found       := currentBoolWith_(attrBColor())
-  return (curMinMoves, found)
+  GoToTopRow()
+  Assert_OrFail_(isCellAtTopRow(), msgNoQuellLevel())
+  curSpikesDir  := currentMDirWith_(attrAColor())  Move(East)
+  curNumMoves   := currentNumWith_(attrAColor())   Move(East)
+  curMinMoves   := currentMNumWith_(attrAColor())  Move(East)
+  curJewelPos   := currentPosWith_(attrAColor())   Move(East)
+  curSolution   := currentDirsWith_And_(attrAColor(), attrBColor())
+  GoToEdge(East)                                   Move(West)
+  curNumPearls  := currentNumWith_(attrAColor())   Move(West)
+  curJewelFound := currentBoolWith_(attrBColor())
+  return (curSpikesDir, curNumMoves, curMinMoves, curJewelPos, curJewelFound, curSolution, curNumPearls)
 }
 
 function currentQBoard() {
   GoToCorner__(South,East)
-  let (row, curNumPearls, curSpikesDir) := currentRowInfo()
-  curBoard := [ row ]
-  while (canMove(North)) {
-    Move(North)
-    let (row, numPearls, newSpikesDir) := currentRowInfo()
-    curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
+  curBoard     := [ ]
+  curNumPearls := 0
+  while (not atTopRow()) {
+    let (row, numPearls) := currentRowInfo()
     curBoard     := curBoard ++ [ row ]
     curNumPearls := curNumPearls + numPearls
+    Move(North)
   } 
-  return(curBoard, curNumPearls, curSpikesDir)
+  return(curBoard, curNumPearls)
 }
 
 function currentQBallInfo() {
@@ -110,11 +124,11 @@ function currentQBallInfo() {
                 (Nothing           , Nothing)                       otherwise)
 }
 
-function currentQJewel(found) {
+function currentQJewel(found, jpos) {
   /* PRECOND: * there is a jewel represented in the board */
-  GoToQJewel()
+  GoToCell_(jpos)
   return(QJewel(found        <- found
-              , jpos         <- currentPos()
+              , jpos         <- jpos
               , hitsReceived <- numStones(attrAColor())-1))
 }
 
@@ -127,27 +141,18 @@ procedure GoToBall() {
   }
 }
 
-procedure GoToQJewel() {
-  StartBoardTraverseTo_And_(East, North)
-  while(not atEndOfBoardTraverseTo_And_(East, North) 
-     && not hasQJewel()) {
-    GoToNextCellInBoardTraverseTo_And_(East, North) 
-  }
-}
-
 function currentRowInfo() {
   GoToEdge(West)
-  let (qelem, curSpikesDir) := currentQElem()
+  qelem := currentQElem()
   curRow       := [ qelem ]
   curNumPearls := delta(isPearl_(qelem))
   while (canMove(East)) {
      Move(East)
-     let (qelem, newSpikesDir) := currentQElem()
-     curSpikesDir := firstOf_Or_(curSpikesDir, newSpikesDir)
+     qelem := currentQElem()
      curRow       := curRow ++ [ qelem ]
      curNumPearls := curNumPearls + delta(isPearl_(qelem))
   }
-  return (curRow, curNumPearls, curSpikesDir)
+  return (curRow, curNumPearls)
 }
 
 function currentQElem() {
@@ -165,10 +170,7 @@ function currentQElem() {
           currentSwitch()       on 8
           currentGate()         on 9
           Out                   on 10
-          Out                   on 110
-          boom(msgNoQElement()) otherwise 
-      , choose currentMDirWith_(attrAColor()) when (numStones(qelemColor()) == 7) 
-               Nothing                        otherwise)
+          boom(msgNoQElement()) otherwise)
 }
 
 function currentBox() {
@@ -216,6 +218,25 @@ function currentCornerWith_(color) {
                 Nothing       otherwise)
 }
 
+function currentDirsWith_And_(colorA, colorB) {
+  code := currentCodeInBase_With_And_(100, colorA, colorB)
+  return(decodedDirs_(code))
+}
+
+function currentCodeInBase_With_And_(base, colorA, colorB) {
+  currentColor := colorA
+  currentCode  := 0
+  currentPow   := 1
+  while (hasStones(colorA)) {
+    currentDigit := currentNumWith_(currentColor)
+    currentCode  := currentCode + currentDigit * currentPow
+    currentPow   := currentPow * base
+    if (currentColor == colorA) { currentColor := colorB            } 
+     else                       { currentColor := colorA Move(East) }
+  }
+  return(currentCode)
+}
+
 function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
 function hasQJewel() { return((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
 function hasWall()   { return(numStones(qelemColor())==2)                           }
@@ -226,28 +247,32 @@ function hasEmpty()  { return(numStones(qelemColor())==0)                       
 // ---------
 procedure DrawQLevel_(quell) {
   ClearBoard()
-  DrawQInfo_(quell)
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
+  DrawQInfo_(quell)
   DrawQJewel_(jewel(quell))
   DrawQBall_To_(ball(quell), inTransit(quell))
 }
 
 // Level 1
 procedure DrawQInfo_(quell) {
-  GoToCorner__(South, West)
-  Drop__Times(qelemColor(), 100)
-  DrawMNum_With_(minMoves(quell), attrAColor())
-  DrawBool_With_(found(jewel(quell)), attrBColor())
+  GoToEdge(West)  EncodeTopMDir_At_(spikesDir(quell), 0)
+  Move(East)      EncodeTopNum_At_(numMoves(quell),1)
+  Move(East)      EncodeTopMNum_At_(minMoves(quell),2)
+  Move(East)      EncodeTopPos_At_(jpos(jewel(quell)), 0)
+  Move(East)      EncodeTopDirs_At_(solution(quell), 3)
+   
+  GoToEdge(East)  MarkTopCell_(0)
+  Move(West)      EncodeTopNum_At_(numPearls(quell),5)
+  Move(West)      EncodeTopBool_At_(found(jewel(quell)), 4)  
+  Move(West)      PadEmptyCellAs_(0)
 }
 
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
   /* PRECOND: * the board has at least one qelem */
   GoToCorner__(South, West)
-  curBoard := board
-  DrawQRow_WithSpikesTo_(head(curBoard), spikesDir)
-  foreach row in tail(curBoard) {
-    Move(North)
+  foreach row in board {
     DrawQRow_WithSpikesTo_(row, spikesDir)
+    Move(North)
   }
 }
 
@@ -266,10 +291,59 @@ procedure DrawQJewel_(jewel) {
 }
 
 // Level 2
+
+// Top row
+procedure MarkTopCell_(i) { Drop__Times(qelemColor(), 100+i) }
+procedure EncodeTopBool_At_(b ,i) { MarkTopCell_(i)  DrawBool_With_(b , attrBColor()) }
+procedure EncodeTopMDir_At_(md,i) { MarkTopCell_(i)  DrawMDir_With_(md, attrAColor()) }
+procedure EncodeTopPos_At_(pos,i) { MarkTopCell_(i)  DrawPos_With_(pos, attrAColor()) }
+
+procedure EncodeTopDirs_At_(dirs, i) {
+   code := codeOfDirs_(dirs)
+   DrawTopCode_InBase_With_And_As_(code, 100, attrAColor(), attrBColor(), i)
+}
+
+procedure EncodeTopMNum_At_(mn, i) { MarkTopCell_(i) DrawMNum_With_(mn, attrAColor()) }
+procedure EncodeTopNum_At_(n, i)   {
+  MarkTopCell_(i)
+  if (n < 100) { DrawNum_With_(n, attrAColor())   } 
+   else        { DrawNum_With_(100, attrAColor()) }
+}
+
+procedure PadEmptyCellAs_(i) {
+   while(not isCellAtTopRow()) {
+      MarkTopCell_(i) 
+      Move(West)
+   }
+}
+
+procedure DrawTopCode_InBase_With_And_As_(code, base, colorA, colorB, i) {
+  currentColor := colorA
+  currentCode  := code
+  while (currentCode > 0) {
+    currentDigit := currentCode mod base
+    currentCode  := currentCode div base
+    DrawNum_With_(currentDigit, currentColor)
+    if (currentColor == colorA) { MarkTopCell_(i)  currentColor := colorB } 
+     else                       { Move(East)       currentColor := colorA }
+  }
+}
+
+procedure GoToTopRow() {
+  GoToCorner__(South, West)
+  while (canMove(North) && not atTopRow()) { Move(North) }
+}
+
+function atTopRow ()      { return(isCellAtTopRow())               }
+function isCellAtTopRow() { return(numStones(qelemColor()) >= 100) }
+
+
+// Ball
 procedure DrawBall_(mdir) {
   DrawMDir_With_(mdir, ballColor())
 }
 
+// Board
 procedure DrawQRow_WithSpikesTo_(row, spikesDir) {
   /* PRECOND: * the row has at least one element */
   GoToEdge(West)

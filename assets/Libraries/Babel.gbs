@@ -106,7 +106,7 @@ function prevDir(dir)  { return(dirSp2En(previo(dirEn2Sp(dir))))    }
 function minDirection() { return(dirSp2En(minDir())) }
 function maxDirection() { return(dirSp2En(maxDir())) }
 
-// Directions
+// Lists
 function isEmpty(xs) { return(esVacía(xs)) }
 function head(xs)    { return(primero(xs)) }
 function tail(xs)    { return(resto(xs))   }
@@ -125,8 +125,8 @@ function msgNoCells() {
 }
 
 function msgNotExpected(element) { 
-  return(babel("CANNOT HAPPEN: " ++ element ++ " has changed?"
-              ,"NO PUEDE SUCEDER: ¿cambió " ++ element ++ "?"
+  return(babel("CANNOT HAPPEN: has some element changed?"
+              ,"NO PUEDE SUCEDER: ¿cambió algún elemento?"
               ))
 }
 /* ============================================================================================================

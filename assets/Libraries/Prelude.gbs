@@ -35,6 +35,37 @@ function delta(b) {
 }
 
 // ---------
+// Math functions 
+// ---------
+function timesOf_In_(p,n) {
+  currentN     := n
+  currentTimes := 0
+  while (currentN>=p) {
+    currentTimes := currentTimes + 1
+    currentN     := currentN-p
+  }
+  return (currentTimes)
+}
+
+function maxPowerOf_LessThan_(n, m) {
+   currentPow := 1
+   while (currentPow <= m) {
+      currentPow := currentPow * n
+   }
+   return (currentPow div n)
+}
+
+function maxPowerOf_WithAccumPowLessThan_(n, p) {
+   currentPow := 1
+   currentSum := currentPow
+   while (currentSum < p) {
+        currentPow := currentPow * n
+        currentSum := currentPow + currentSum
+    }
+   return (currentPow div n)
+}
+
+// ---------
 // Coding functions 
 // ---------
 
@@ -64,9 +95,13 @@ function decodedDir_(code) {
            boom(msgNotACodeFor_("Direction")) otherwise)
 }
 
+// Num
+procedure DrawNum_With_(n, color) { Drop__Times(color, n)    }
+function  currentNumWith_(color)  { return(numStones(color)) }
+
 // Bool
 procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
-function codeOfBool_(b) {
+function  codeOfBool_(b) {
   return (choose 1 when (b)
                  0 otherwise)
 }
@@ -82,6 +117,60 @@ function decodedBool_(code) {
            True   on 1
            False  on 0
            boom(msgNotACodeFor_("Bool")) otherwise)
+}
+
+function codeOfDirs_(dirs) {
+  /* OBS: the coding is a 0-less one */
+  currentCode := 0
+  currentPow  := 1
+  foreach dir in dirs {
+    currentCode := currentCode + currentPow * codeOfDir_(dir)
+    currentPow  := currentPow * 4
+  }
+  return (currentCode)
+}
+                
+function decodedDirs_(code) {
+   /* OBS: for decoding, 0-s need to be adjusted */
+   curCodes   := []
+   currentPow := maxPowerOf_WithAccumPowLessThan_(4, code)
+   remCode    := code
+   while (currentPow > 0) { // (code-remCode) is encoded in curCodes (shifted by currentPow)
+     curCode    := timesOf_In_(currentPow, remCode)
+     if (curCode == 0) { // As a code digit cannot be 0, 1 must be substracted of previous calculus
+         curCodes := substractOneFromDirCodes_(curCodes)
+         remCode  := remCode + currentPow * 4 // remCode needs adjustment too, to keep the invariant
+         curCode  := 4
+     }
+     remCode    := remCode - (curCode * currentPow)
+     currentPow := currentPow div 4
+     curCodes      := [ curCode ] ++ curCodes
+   }
+   return(mapDecodeDirsTo_(curCodes))
+}
+
+function mapDecodeDirsTo_(codes) {
+  currentRes := []
+  foreach code in codes {
+    currentRes := currentRes ++ [ decodedDir_(code) ]
+  }
+  return (currentRes)
+}
+
+function substractOneFromDirCodes_(codes) {
+  /* PRECOND: codes is not [] or [1] 
+     OBS: substracts one in a 0-less representation in base 4
+  */
+  curCode  := head(codes)
+  curCodes := tail(codes)
+  curSeen := []
+  while (curCode==1 && not isEmpty(curCodes)) {
+        curSeen  := curSeen ++ [4]
+        curCode  := head(curCodes)
+        curCodes := tail(curCodes)
+  }
+  if (curCode>1) { curSeen := curSeen++[curCode-1] }
+  return (curSeen++curCodes)
 }
 
 // ---------
@@ -388,8 +477,8 @@ function pop(st)      { return (Stack(data <- tail(data(st))))  } /* PRECOND: st
 // ERROR MESSAGES
 // ---------
 function msgNotACodeFor_(element) {
-  return(babel("Not a " ++ element ++" code"
-              ,"No es un código para " ++ element)) 
+  return(babel("Not a code"
+              ,"No es un código")) 
 }
 /* ============================================================================================================
    END Prelude.gbs
