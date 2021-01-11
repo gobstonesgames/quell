@@ -5,6 +5,10 @@ rules:
   - { image: Ball.png      , when: { black: '*', blue: 3, green: '*', red: '*' } }
   - { image: Ball.png      , when: { black: '*', blue: 4, green: '*', red: '*' } }
   - { image: Ball.png      , when: { black: '*', blue: 5, green: '*', red: '*' } }
+  - { image: Ball-North.png, when: { black: '*', blue: 6, green: '*', red: '*' } }
+  - { image: Ball-East.png , when: { black: '*', blue: 7, green: '*', red: '*' } }
+  - { image: Ball-South.png, when: { black: '*', blue: 8, green: '*', red: '*' } }
+  - { image: Ball-West.png , when: { black: '*', blue: 9, green: '*', red: '*' } }
   - { image: Empty.png     , when: { black:   0, blue: 0, green:   0, red:   0 } }
   - { image: Pearl.png     , when: { black:   1, blue: 0, green:   0, red:   0 } }
   - { image: Wall.png      , when: { black:   2, blue: 0, green:   0, red:   0 } }
@@ -21,10 +25,16 @@ rules:
   - { image: AngleNE.png   , when: { black:   4, blue: 0, green: '*', red:   8 } }
   - { image: AngleSW.png   , when: { black:   4, blue: 0, green: '*', red:   6 } }
   - { image: AngleSE.png   , when: { black:   4, blue: 0, green: '*', red:   5 } }
-  - { image: Out.png       , when: { black:  10, blue: 0, green:   0, red:   0 } }
+  - { image: Out.png       , when: { black:  10, blue: 0, green: '*', red: '*' } }
   - { image: TopEmpty.png  , when: { black: 100, blue: 0, green: '*', red: '*' } }
+  - { image: TopNum00.png  , when: { black: 101, blue: 0, green: '*', red:   0 } }
+  - { image: TopNum01.png  , when: { black: 101, blue: 0, green: '*', red:   1 } }
+  - { image: TopNum02.png  , when: { black: 101, blue: 0, green: '*', red:   2 } }
+  - { image: TopNum03.png  , when: { black: 101, blue: 0, green: '*', red:   3 } }
   - { image: TopEmpty.png  , when: { black: 101, blue: 0, green: '*', red: '*' } }
+  - { image: TopMin03.png  , when: { black: 102, blue: 0, green: '*', red:   3 } }
   - { image: TopEmpty.png  , when: { black: 102, blue: 0, green: '*', red: '*' } }
   - { image: TopEmpty.png  , when: { black: 103, blue: 0, green: '*', red: '*' } }
   - { image: TopEmpty.png  , when: { black: 104, blue: 0, green: '*', red: '*' } }
+  - { image: TopSolved.png , when: { black: 105, blue: 0, green: '*', red:   0 } }
   - { image: TopEmpty.png  , when: { black: 105, blue: 0, green: '*', red: '*' } }

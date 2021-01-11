@@ -1,15 +1,15 @@
 attire:
   active: Quell
   user_permissions:
-    can_toggle_visibility: false
+    can_toggle_visibility: true
   visible: true
 board:
   active: 1
   initial_board_source: selected
-  visible_edition: false
-  collapse_toolbox: false
+  visible_edition: true
+  collapse_toolbox: true
   user_permissions:
-    can_view_attire_section: false
+    can_view_attire_section: true
     can_edit_board: false
     can_change_initial_board: false
     can_change_initial_board_source: false

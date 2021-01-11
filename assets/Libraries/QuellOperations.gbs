@@ -7,10 +7,17 @@
 // REQUIRE: Quell-IO.gbs
    ============================================================================================================
 */
-procedure ProcessMoveTo_(mdir) {
-  quell    := currentQuell()
-  newQuell := quell_WithOneStepTo_(quell, mdir)
+procedure ProcessMoveTo_(dir) { AuxProcessMoveTo_(just(dir)) }
+procedure ProcessMove()       { AuxProcessMoveTo_(Nothing)   }
+
+procedure AuxProcessMoveTo_(mdir) {
+  quell      := currentQuell()
+  isTutorial := isTutorialLevel()
+  newQuell   := quell_WithOneStepTo_(quell, mdir)
+  MarkAsTutorial()
+  AddBallVisualIndicationOn_(newQuell)
   WriteQuell_(newQuell)
+//  AnalizeEndingOn_(newQuell)
 }
 
 // ---------

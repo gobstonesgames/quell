@@ -193,7 +193,7 @@ function maxPowerOf_LessThan_(n, m) {
 function maxPowerOf_WithAccumPowLessThan_(n, p) {
    currentPow := 1
    currentSum := currentPow
-   while (currentSum < p) {
+   while (currentSum <= p) {
         currentPow := currentPow * n
         currentSum := currentPow + currentSum
     }
@@ -203,10 +203,6 @@ function maxPowerOf_WithAccumPowLessThan_(n, p) {
 // ---------
 // Coding functions 
 // ---------
-
-// Num
-procedure DrawNum_With_(n, color) { Drop__Times(color, n)    }
-function  currentNumWith_(color)  { return(numStones(color)) }
 
 // Dir
 procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
@@ -234,9 +230,13 @@ function decodedDir_(code) {
            boom(msgNotACodeFor_("Direction")) otherwise)
 }
 
+// Num
+procedure DrawNum_With_(n, color) { Drop__Times(color, n)    }
+function  currentNumWith_(color)  { return(numStones(color)) }
+
 // Bool
 procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
-function codeOfBool_(b) {
+function  codeOfBool_(b) {
   return (choose 1 when (b)
                  0 otherwise)
 }
@@ -602,11 +602,11 @@ type Stack is record {
   field data  // [ Elements ]
 }
 
-function emptyS()     { return(Stack(data <- [ ]))             }
-function isEmptyS(st) { return(not isEmpty(data(st)))          }
-function push(x, st)  { return(Stack(data <- [x] ++ data(st))) }
-function top(st)      { return(head(data(st)))                 } /* PRECOND: st is not empty */
-function pop(st)      { return(Stack(data <- tail(data(st))))  } /* PRECOND: st is not empty */
+function emptyS()     { return (Stack(data <- [ ]))             }
+function isEmptyS(st) { return(not isEmpty(data(st)))           }
+function push(x, st)  { return (Stack(data <- [x] ++ data(st))) }
+function top(st)      { return (head(data(st)))                 } /* PRECOND: st is not empty */
+function pop(st)      { return (Stack(data <- tail(data(st))))  } /* PRECOND: st is not empty */
 
 // ---------
 // ERROR MESSAGES
@@ -647,10 +647,10 @@ procedure WriteQuell_(quell) {
 // ---------
 /*
   The ball is represented with ballColor() stones (standard representation for MDir:, 1 to 5 stones:
-    + moving North, 1 stone
-    + moving East,  2 stones
-    + moving South, 3 stones
-    + moving West,  4 stones
+    + moving North, 1 or 6 stones
+    + moving East,  2 or 7 stones
+    + moving South, 3 or 8 stones
+    + moving West,  4 or 9 stones
     + not moving,   5 stones)
      
    QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
@@ -717,13 +717,13 @@ function currentQInfo() {
   Assert_OrFail_(isCellAtTopRow(), msgNoQuellLevel())
   curSpikesDir  := currentMDirWith_(attrAColor())  Move(East)
   curNumMoves   := currentNumWith_(attrAColor())   Move(East)
-  curMinMoves   := currentMNumWith_(attrAColor())  Move(East)
+  curMinMoves   := currentNumWith_(attrAColor())   Move(East)
   curJewelPos   := currentPosWith_(attrAColor())   Move(East)
   curSolution   := currentDirsWith_And_(attrAColor(), attrBColor())
   GoToEdge(East)                                   Move(West)
   curNumPearls  := currentNumWith_(attrAColor())   Move(West)
   curJewelFound := currentBoolWith_(attrBColor())
-  return (curSpikesDir, curNumMoves, curMinMoves, curJewelPos, curJewelFound, curSolution, curNumPearls)
+  return (curSpikesDir, curNumMoves, just(curMinMoves), curJewelPos, curJewelFound, curSolution, curNumPearls)
 }
 
 function currentQBoard() {
@@ -741,6 +741,7 @@ function currentQBoard() {
 
 function currentQBallInfo() {
   GoToBall()
+  NormalizeBallIfNeeded()
   return(choose (just(currentPos()), currentMDirWith_(ballColor())) when (hasBall())
                 (Nothing           , Nothing)                       otherwise)
 }
@@ -760,6 +761,10 @@ procedure GoToBall() {
      && not hasBall()) {
     GoToNextCellInBoardTraverseTo_And_(East, North) 
   }
+}
+
+procedure NormalizeBallIfNeeded() {
+  if (ballIndicatesDirectionVisually()) { RemoveBallVisualIndication() }
 }
 
 function currentRowInfo() {
@@ -791,7 +796,6 @@ function currentQElem() {
           currentSwitch()       on 8
           currentGate()         on 9
           Out                   on 10
-          Out                   on 110
           boom(msgNoQElement()) otherwise)
 }
 
@@ -834,7 +838,7 @@ function currentCornerWith_(color) {
       d2 := nextDir(d1)   
   } elseif (num_IsBetween_And_(code, 5, 8)) 
     { d1 := decodedDir_(code-4)
-      d2 := prevDir(d1)        
+      d2 := prevDir(d1)   
   } else { }                                      
   return(choose just((d1,d2)) when (num_IsBetween_And_(code, 1, 8))
                 Nothing       otherwise)
@@ -859,16 +863,46 @@ function currentCodeInBase_With_And_(base, colorA, colorB) {
   return(currentCode)
 }
 
-function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
+function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 9))     }
 function hasQJewel() { return((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
 function hasWall()   { return(numStones(qelemColor())==2)                           }
 function hasEmpty()  { return(numStones(qelemColor())==0)                           }
 
 // ---------
+// Tutorial operations
+// ---------
+procedure MarkAsTutorial() {
+  ClearBoard()
+  GoToCorner__(South, West)
+  Drop(attrBColor())
+}
+
+function isTutorialLevel() {
+  GoToCorner__(South, West)
+  return(hasStones(attrBColor()))
+}
+
+procedure AddBallVisualIndicationOn_(quell) {
+  if (hasQBall_(quell) && not hasMovingQBall_(quell) && not isEmpty(solution(quell)) ) {
+    GoToCell_(ballPosOn_(quell))
+    AddBallVisualIndicationTo_(head(solution(quell)))
+  }
+}
+
+function  ballIndicatesDirectionVisually() { return(num_IsBetween_And_(numStones(ballColor()), 6, 9)) }
+procedure RemoveBallVisualIndication() { 
+  /* PRECOND: there is a ball with visual indication (there are between 6 and 9 stones) in the current cell */
+  Grab__Times(ballColor(), numStones(ballColor())-5) 
+}
+procedure AddBallVisualIndicationTo_(dir) { 
+  /* PRECOND: there is a ball that is not moving and without visual indication (there are 5 stones) in the current cell */
+  Drop__Times(ballColor(), codeOfDir_(dir)) 
+}
+
+// ---------
 // Drawing operations
 // ---------
 procedure DrawQLevel_(quell) {
-  ClearBoard()
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQInfo_(quell)
   DrawQJewel_(jewel(quell))
@@ -879,7 +913,7 @@ procedure DrawQLevel_(quell) {
 procedure DrawQInfo_(quell) {
   GoToEdge(West)  EncodeTopMDir_At_(spikesDir(quell), 0)
   Move(East)      EncodeTopNum_At_(numMoves(quell),1)
-  Move(East)      EncodeTopMNum_At_(minMoves(quell),2)
+  Move(East)      EncodeTopNum_At_(fromJust(minMoves(quell)),2)
   Move(East)      EncodeTopPos_At_(jpos(jewel(quell)), 0)
   Move(East)      EncodeTopDirs_At_(solution(quell), 3)
    
@@ -1062,9 +1096,15 @@ function msgInvalidQuell() {
 // REQUIRE: Quell-IO.gbs
    ============================================================================================================
 */
-procedure ProcessMoveTo_(mdir) {
-  quell    := currentQuell()
-  newQuell := quell_WithOneStepTo_(quell, mdir)
+procedure ProcessMoveTo_(dir) { AuxProcessMoveTo_(just(dir)) }
+procedure ProcessMove()       { AuxProcessMoveTo_(Nothing)   }
+
+procedure AuxProcessMoveTo_(mdir) {
+  quell      := currentQuell()
+  isTutorial := isTutorialLevel()
+  newQuell   := quell_WithOneStepTo_(quell, mdir)
+  MarkAsTutorial()
+  AddBallVisualIndicationOn_(newQuell)
   WriteQuell_(newQuell)
 }
 
@@ -1088,7 +1128,7 @@ function quell_WithOneStepTo_(quell, mdir) {
 
    // COMPLETAR     
    //    If nextQE is a box, calculate its immediate next      
-   // Mejorar el anÃ¡lisis de adjusted
+   // Mejorar el análisis de adjusted
    // let (dirOfMove, nextQE, nextPos) :=  adjusted_And_In_WRT_In_On_(dirOfMove, nextQE, nextPos, curQE, curPos, newQuell)
     
     action       := whatHappensIn_MovingTo_On_(nextQE, dirOfMove, newQuell)
@@ -1350,8 +1390,6 @@ function msgNotABorder()     { return(babel("Limit at the given position is not 
    END QuellOperations.gbs
    ============================================================================================================
 */
-
-
 /* ============================================================================================================
    START QuellRepresentation.gbs
    Definition of the datatypes representing a Quell level

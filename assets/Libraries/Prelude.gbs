@@ -58,7 +58,7 @@ function maxPowerOf_LessThan_(n, m) {
 function maxPowerOf_WithAccumPowLessThan_(n, p) {
    currentPow := 1
    currentSum := currentPow
-   while (currentSum < p) {
+   while (currentSum <= p) {
         currentPow := currentPow * n
         currentSum := currentPow + currentSum
     }
@@ -179,13 +179,13 @@ function substractOneFromDirCodes_(codes) {
 function fst(pair) {
     return(matching (pair) select 
                x on (x,y)
-               boom("Cannot happen") otherwise)
+               boom(msgNotExpected("pair (A,B)")) otherwise)
 }
 
 function snd(pair) {
     return(matching (pair) select 
                y on (x,y)
-               boom("Cannot happen") otherwise)
+               boom(msgNotExpected("pair (A,B)")) otherwise)
 }
 
 // ---------

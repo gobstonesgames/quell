@@ -26,10 +26,10 @@ procedure WriteQuell_(quell) {
 // ---------
 /*
   The ball is represented with ballColor() stones (standard representation for MDir:, 1 to 5 stones:
-    + moving North, 1 stone
-    + moving East,  2 stones
-    + moving South, 3 stones
-    + moving West,  4 stones
+    + moving North, 1 or 6 stones
+    + moving East,  2 or 7 stones
+    + moving South, 3 or 8 stones
+    + moving West,  4 or 9 stones
     + not moving,   5 stones)
      
    QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
@@ -96,13 +96,13 @@ function currentQInfo() {
   Assert_OrFail_(isCellAtTopRow(), msgNoQuellLevel())
   curSpikesDir  := currentMDirWith_(attrAColor())  Move(East)
   curNumMoves   := currentNumWith_(attrAColor())   Move(East)
-  curMinMoves   := currentMNumWith_(attrAColor())  Move(East)
+  curMinMoves   := currentNumWith_(attrAColor())   Move(East)
   curJewelPos   := currentPosWith_(attrAColor())   Move(East)
   curSolution   := currentDirsWith_And_(attrAColor(), attrBColor())
   GoToEdge(East)                                   Move(West)
   curNumPearls  := currentNumWith_(attrAColor())   Move(West)
   curJewelFound := currentBoolWith_(attrBColor())
-  return (curSpikesDir, curNumMoves, curMinMoves, curJewelPos, curJewelFound, curSolution, curNumPearls)
+  return (curSpikesDir, curNumMoves, just(curMinMoves), curJewelPos, curJewelFound, curSolution, curNumPearls)
 }
 
 function currentQBoard() {
@@ -120,6 +120,7 @@ function currentQBoard() {
 
 function currentQBallInfo() {
   GoToBall()
+  NormalizeBallIfNeeded()
   return(choose (just(currentPos()), currentMDirWith_(ballColor())) when (hasBall())
                 (Nothing           , Nothing)                       otherwise)
 }
@@ -139,6 +140,10 @@ procedure GoToBall() {
      && not hasBall()) {
     GoToNextCellInBoardTraverseTo_And_(East, North) 
   }
+}
+
+procedure NormalizeBallIfNeeded() {
+  if (ballIndicatesDirectionVisually()) { RemoveBallVisualIndication() }
 }
 
 function currentRowInfo() {
@@ -237,16 +242,46 @@ function currentCodeInBase_With_And_(base, colorA, colorB) {
   return(currentCode)
 }
 
-function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 5))     }
+function hasBall()   { return(num_IsBetween_And_(numStones(ballColor()), 1, 9))     }
 function hasQJewel() { return((hasWall() || hasEmpty()) && hasStones(attrAColor())) }
 function hasWall()   { return(numStones(qelemColor())==2)                           }
 function hasEmpty()  { return(numStones(qelemColor())==0)                           }
 
 // ---------
+// Tutorial operations
+// ---------
+procedure MarkAsTutorial() {
+  ClearBoard()
+  GoToCorner__(South, West)
+  Drop(attrBColor())
+}
+
+function isTutorialLevel() {
+  GoToCorner__(South, West)
+  return(hasStones(attrBColor()))
+}
+
+procedure AddBallVisualIndicationOn_(quell) {
+  if (hasQBall_(quell) && not hasMovingQBall_(quell) && not isEmpty(solution(quell)) ) {
+    GoToCell_(ballPosOn_(quell))
+    AddBallVisualIndicationTo_(head(solution(quell)))
+  }
+}
+
+function  ballIndicatesDirectionVisually() { return(num_IsBetween_And_(numStones(ballColor()), 6, 9)) }
+procedure RemoveBallVisualIndication() { 
+  /* PRECOND: there is a ball with visual indication (there are between 6 and 9 stones) in the current cell */
+  Grab__Times(ballColor(), numStones(ballColor())-5) 
+}
+procedure AddBallVisualIndicationTo_(dir) { 
+  /* PRECOND: there is a ball that is not moving and without visual indication (there are 5 stones) in the current cell */
+  Drop__Times(ballColor(), codeOfDir_(dir)) 
+}
+
+// ---------
 // Drawing operations
 // ---------
 procedure DrawQLevel_(quell) {
-  ClearBoard()
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQInfo_(quell)
   DrawQJewel_(jewel(quell))
@@ -257,7 +292,7 @@ procedure DrawQLevel_(quell) {
 procedure DrawQInfo_(quell) {
   GoToEdge(West)  EncodeTopMDir_At_(spikesDir(quell), 0)
   Move(East)      EncodeTopNum_At_(numMoves(quell),1)
-  Move(East)      EncodeTopMNum_At_(minMoves(quell),2)
+  Move(East)      EncodeTopNum_At_(fromJust(minMoves(quell)),2)
   Move(East)      EncodeTopPos_At_(jpos(jewel(quell)), 0)
   Move(East)      EncodeTopDirs_At_(solution(quell), 3)
    

@@ -1,15 +1,34 @@
+/* */
 interactive program {
-  INIT       -> { WriteQuell_(level())        }
-  K_DOWN     -> { ProcessMoveTo_(just(South)) }
-  K_UP       -> { ProcessMoveTo_(just(North)) }
-  K_LEFT     -> { ProcessMoveTo_(just(West))  }    
-  K_RIGHT    -> { ProcessMoveTo_(just(East))  }
-  TIMEOUT(1) -> { ProcessMoveTo_(Nothing)     }
+  INIT       -> { MarkAsTutorial() 
+                  WriteQuell_(level())        
+                }
+  K_DOWN     -> { ProcessMoveTo_(South) }
+  K_UP       -> { ProcessMoveTo_(North) }
+  K_LEFT     -> { ProcessMoveTo_(West)  }    
+  K_RIGHT    -> { ProcessMoveTo_(East)  }
+  TIMEOUT(1) -> { ProcessMove()         }
 }
+/* */
 
 /*
 program {
+  MarkAsTutorial() 
   WriteQuell_(level())
-  // ProcessMoveTo_(just(South))
+  newQuell := level()
+  isTutorial := isTutorialLevel()
+//  ProcessMoveTo_(South)
+  newQuell   := quell_WithOneStepTo_(newQuell, just(South))
+//  ProcessMove()
+  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
+//  ProcessMove()
+  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
+//  ProcessMoveTo_(East)
+  newQuell   := quell_WithOneStepTo_(newQuell, just(East))
+//  ProcessMove()
+  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
+  MarkAsTutorial()
+  AddBallVisualIndicationOn_(newQuell)
+  WriteQuell_(newQuell)
 }
 */
