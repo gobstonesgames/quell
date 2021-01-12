@@ -1,9 +1,8 @@
 /* ============================================================================================================
    START Babel.gbs
-   Code for using English names on Gobstones programs, even when the language is still not internationalized
+   Code for swap between  errors messages on different languages
    ============================================================================================================
 */
-
 function language() { return(English) }
 
 procedure Assert_OrFail_(condition, msg) { if (not condition) { BOOM(msg) } }
@@ -21,113 +20,6 @@ function babel(msgEn, msgSp) {
   return(matching (language()) select 
            msgSp on Spanish
            msgEn otherwise)
-}
-
-// Colors
-type Colour is variant {
-    case Red    {}
-    case Green  {}
-    case Blue   {}
-    case Black  {}
-}
-
-function colorEn2Sp(color) {
-  return(matching (color) select
-           Rojo   on Red
-           Verde  on Green
-           Azul   on Blue
-           Negro  on Black
-           boom(msgNotExpected("Colour")) otherwise)
-}
-
-function colorSp2En(color) {
-  return(matching (color) select
-           Red   on Rojo    
-           Green on Verde   
-           Blue  on Azul   
-           Black on Negro
-           boom(msgNotExpected("Color")) otherwise)
-}
-
-function hasStones(color) { return(hayBolitas(colorEn2Sp(color))) }
-function numStones(color) { return(nroBolitas(colorEn2Sp(color))) }
-
-procedure Drop(color) { Poner(colorEn2Sp(color)) }
-procedure Grab(color) { 
-    Assert_OrFail_(hasStones(color), msgNoStones())
-    Sacar(colorEn2Sp(color)) 
-}
-
-function nextColor(color)  { return(colorSp2En(siguiente(colorEn2Sp(dir)))) }
-function prevColor(color)  { return(colorSp2En(previo(colorEn2Sp(dir))))    }
-
-function minColour() { return(colorSp2En(minColor())) }
-function maxColour() { return(colorSp2En(maxColor())) }
-
-// Directions
-type Direction is variant {
-    case North {}
-    case East  {}
-    case South {}
-    case West  {}
-}
-
-function dirEn2Sp(dir) {
-  return(matching (dir) select
-           Norte on North
-           Este  on East
-           Sur   on South
-           Oeste on West
-           boom(msgNotExpected("Direction")) otherwise)
-}
-
-function dirSp2En(dir) {
-  return(matching (dir) select
-           North on Norte
-           East  on Este 
-           South on Sur  
-           West  on Oeste
-           boom(msgNotExpected("Dirección")) otherwise)
-}
-
-function canMove(dir) { return(puedeMover(dirEn2Sp(dir))) }
-
-procedure Move(dir) { 
-  Assert_OrFail_(canMove(dir), msgNoCells())
-  Mover(dirEn2Sp(dir))     
-}
-
-procedure GoToEdge(dir) { IrAlBorde(dirEn2Sp(dir)) }
-
-function opposite(dir) { return(dirSp2En(opuesto(dirEn2Sp(dir))))   }
-function nextDir(dir)  { return(dirSp2En(siguiente(dirEn2Sp(dir)))) }
-function prevDir(dir)  { return(dirSp2En(previo(dirEn2Sp(dir))))    }
-
-function minDirection() { return(dirSp2En(minDir())) }
-function maxDirection() { return(dirSp2En(maxDir())) }
-
-// Lists
-function isEmpty(xs) { return(esVacía(xs)) }
-function head(xs)    { return(primero(xs)) }
-function tail(xs)    { return(resto(xs))   }
-
-// ERROR MESSAGES
-function msgNoStones() { 
-  return(babel("Cannot grab stones: there are no stones of that color"
-              ,"No puedo sacar bolitas: no hay bolitas de ese color"
-              ))
-}
-
-function msgNoCells() { 
-  return(babel("Cannot move: there are no cells on that direction"
-              ,"No puedo mover hacia ahí: no hay celdas en esa dirección"
-              ))
-}
-
-function msgNotExpected(element) { 
-  return(babel("CANNOT HAPPEN: has some element changed?"
-              ,"NO PUEDE SUCEDER: ¿cambió algún elemento?"
-              ))
 }
 /* ============================================================================================================
    END Babel.gbs
