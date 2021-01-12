@@ -1,4 +1,3 @@
-/* */
 interactive program {
   INIT       -> { MarkAsTutorial() 
                   WriteQuell_(level())        
@@ -12,26 +11,3 @@ interactive program {
   K_RIGHT    -> { ProcessMoveTo_(East)  }
   TIMEOUT(1) -> { ProcessMove()         }
 }
-/* */
-
-/*
-program {
-  MarkAsTutorial() 
-  WriteQuell_(level())
-  newQuell := level()
-  isTutorial := isTutorialLevel()
-//  ProcessMoveTo_(South)
-  newQuell   := quell_WithOneStepTo_(newQuell, just(South))
-//  ProcessMove()
-  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
-//  ProcessMove()
-  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
-//  ProcessMoveTo_(East)
-  newQuell   := quell_WithOneStepTo_(newQuell, just(East))
-//  ProcessMove()
-  newQuell   := quell_WithOneStepTo_(newQuell, Nothing)
-  MarkAsTutorial()
-  AddBallVisualIndicationOn_(newQuell)
-  WriteQuell_(newQuell)
-}
-*/

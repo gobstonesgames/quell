@@ -1,12 +1,12 @@
 attire:
   active: Quell
-  user_permissions:
-    can_toggle_visibility: true
   visible: true
+  user_permissions:
+    can_toggle_visibility: false
 board:
   active: 1
   initial_board_source: selected
-  visible_edition: true
+  visible_edition: false
   collapse_toolbox: true
   user_permissions:
     can_view_attire_section: true
@@ -21,5 +21,7 @@ execution_speed:
 library:
   visible: false
 blocks:
+  disabled: []
+  visible:  ["Just run the code"]
   defaultToolbox: |
       <category name="Just run the code" gbs_custom="SEPARATOR">

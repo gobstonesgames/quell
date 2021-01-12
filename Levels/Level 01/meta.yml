@@ -1,7 +1,4 @@
-name: 'Quell, level 1'
-blocks:
-  disabled: []
-  visible:  ["Just run the code"]
+name: 'Welcome to Quell'
 
 inherit:
   $course: gobstonesgames/quell
@@ -13,3 +10,4 @@ inherit:
   library: true
   board: true
   attire: true
+  blocks: true
