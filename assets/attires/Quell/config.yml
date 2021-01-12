@@ -31,7 +31,35 @@ rules:
   - { image: TopEmpty.png   , when: { black: 104, blue: 0, green: '*', red: '*' } }
   - { image: TopSolved.png  , when: { black: 105, blue: 0, green: '*', red:   0 } }
   - { image: TopUnsolved.png, when: { black: 105, blue: 0, green: '*', red: '*' } }
+  - { image: TopMin01.png   , when: { black: 102, blue: 0, green: '*', red:   1 } }
+  - { image: TopMin02.png   , when: { black: 102, blue: 0, green: '*', red:   2 } }
   - { image: TopMin03.png   , when: { black: 102, blue: 0, green: '*', red:   3 } }
+  - { image: TopMin04.png   , when: { black: 102, blue: 0, green: '*', red:   4 } }
+  - { image: TopMin05.png   , when: { black: 102, blue: 0, green: '*', red:   5 } }
+  - { image: TopMin06.png   , when: { black: 102, blue: 0, green: '*', red:   6 } }
+  - { image: TopMin07.png   , when: { black: 102, blue: 0, green: '*', red:   7 } }
+  - { image: TopMin08.png   , when: { black: 102, blue: 0, green: '*', red:   8 } }
+  - { image: TopMin09.png   , when: { black: 102, blue: 0, green: '*', red:   9 } }
+  - { image: TopMin10.png   , when: { black: 102, blue: 0, green: '*', red:  10 } }
+  - { image: TopMin11.png   , when: { black: 102, blue: 0, green: '*', red:  11 } }
+  - { image: TopMin12.png   , when: { black: 102, blue: 0, green: '*', red:  12 } }
+  - { image: TopMin13.png   , when: { black: 102, blue: 0, green: '*', red:  13 } }
+  - { image: TopMin14.png   , when: { black: 102, blue: 0, green: '*', red:  14 } }
+  - { image: TopMin15.png   , when: { black: 102, blue: 0, green: '*', red:  15 } }
+  - { image: TopMin16.png   , when: { black: 102, blue: 0, green: '*', red:  16 } }
+  - { image: TopMin17.png   , when: { black: 102, blue: 0, green: '*', red:  17 } }
+  - { image: TopMin18.png   , when: { black: 102, blue: 0, green: '*', red:  18 } }
+  - { image: TopMin19.png   , when: { black: 102, blue: 0, green: '*', red:  19 } }
+  - { image: TopMin20.png   , when: { black: 102, blue: 0, green: '*', red:  20 } }
+  - { image: TopMin21.png   , when: { black: 102, blue: 0, green: '*', red:  21 } }
+  - { image: TopMin22.png   , when: { black: 102, blue: 0, green: '*', red:  22 } }
+  - { image: TopMin23.png   , when: { black: 102, blue: 0, green: '*', red:  23 } }
+  - { image: TopMin24.png   , when: { black: 102, blue: 0, green: '*', red:  24 } }
+  - { image: TopMin25.png   , when: { black: 102, blue: 0, green: '*', red:  25 } }
+  - { image: TopMin26.png   , when: { black: 102, blue: 0, green: '*', red:  26 } }
+  - { image: TopMin27.png   , when: { black: 102, blue: 0, green: '*', red:  27 } }
+  - { image: TopMin28.png   , when: { black: 102, blue: 0, green: '*', red:  28 } }
+  - { image: TopMin29.png   , when: { black: 102, blue: 0, green: '*', red:  29 } }
   - { image: TopEmpty.png   , when: { black: 102, blue: 0, green: '*', red: '*' } }
   - { image: TopNum00.png   , when: { black: 101, blue: 0, green: '*', red:   0 } }
   - { image: TopNum01.png   , when: { black: 101, blue: 0, green: '*', red:   1 } }

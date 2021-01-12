@@ -1,9 +1,12 @@
 /* ============================================================================================================
-   START Babel.gbs
+   START EnglishPrimitives.gbs
    Code for using English names on Gobstones programs, even when the language is still not internationalized
+// REQUIRE: Babel.gbs
    ============================================================================================================
 */
+// ---------
 // Colors
+// ---------
 type Colour is variant {
     case Red    {}
     case Green  {}
@@ -44,7 +47,9 @@ function prevColor(color)  { return(colorSp2En(previo(colorEn2Sp(dir))))    }
 function minColour() { return(colorSp2En(minColor())) }
 function maxColour() { return(colorSp2En(maxColor())) }
 
+// ---------
 // Directions
+// ---------
 type Direction is variant {
     case North {}
     case East  {}
@@ -86,12 +91,16 @@ function prevDir(dir)  { return(dirSp2En(previo(dirEn2Sp(dir))))    }
 function minDirection() { return(dirSp2En(minDir())) }
 function maxDirection() { return(dirSp2En(maxDir())) }
 
+// ---------
 // Lists
+// ---------
 function isEmpty(xs) { return(esVacía(xs)) }
 function head(xs)    { return(primero(xs)) }
 function tail(xs)    { return(resto(xs))   }
 
+// ---------
 // ERROR MESSAGES
+// ---------
 function msgNoStones() { 
   return(babel("Cannot grab stones: there are no stones of that color"
               ,"No puedo sacar bolitas: no hay bolitas de ese color"
@@ -110,6 +119,6 @@ function msgNotExpected(element) {
               ))
 }
 /* ============================================================================================================
-   END Babel.gbs
+   END EnglishPrimitives.gbs
    ============================================================================================================
 */
