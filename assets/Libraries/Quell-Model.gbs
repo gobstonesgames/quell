@@ -1,0 +1,124 @@
+/* ============================================================================================================
+   START Quell-Model.gbs
+   Definition of the datatypes representing a Quell level
+// REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
+// REQUIRE: Prelude.gbs
+   ============================================================================================================
+*/
+
+type QuellLevel is record {
+  /* INV.REP.:
+   * board represent the Quell game-board
+     - all elements of the game-board are lists of the same length
+     - limits (Limits, Angles, and Corners) form a continuous "line"
+     - all rows or columns that have some element different from Out or a limit have at least a two paired limits (Limits or Angles pointing to each other) 
+     - all elements different from Out or limits are between paired limits
+     - no Out or limit elements are between paired limits
+     - for each Portal on the board, its target is a valid pos with the only other Portal with matching id on the board
+   * solution is a list of Dirs of length minMoves that solves the level
+   * minMoves is the minimum number of moves required to solve the level using Quell rules (0 if not solvable)
+   * if the jewel field jpos exists, then it indicates a valid position in the board, and the QElem in that position is either Wall or Empty
+   * either there is some RotableSpikes, at least a Switch, and spikesDir is different from Nothing, 
+     or there is no RotableSpikes, no Switches, and spikesDir is Nothing
+   * all pos values in boxes are valid positions in the board, and the QElement in that position is Empty
+   * if the ball field bpos exists, then it indicates a valid position in the board, and the QElem in that position is either Empty, or an open Gate, or a Portal, or a Switch
+   * if numRightMoves is not Notingh, the number is positive and less than minMoves
+   */
+   field isTutorial    // Bool
+   field board         // [[QElem]] 
+   field solution      // [Dir]
+   field minMoves      // Number
+   field jewel         // QJewel
+   field spikesDir     // Maybe(Direction)
+   field boxes         // [(Pos, Gender)]
+   field ball          // QBall
+   field numMoves      // Number
+   field numRightMoves // Maybe(Number)
+}
+
+type QElem is variant {
+   case Empty        {}
+   case Pearl        {}
+   case Wall         {}
+   case Corner       { field dir }        // Dir
+   case Angle        { field dir }        // Dir
+   case Limit        { field pointsTo }   // Dir
+   case Portal       { field id           // Number
+                       field target       // Pos
+                     }
+   case Gate         { field open }       // Bool
+   case Spike        { field pointsTo }   // Dir
+   case Multispike   {}
+   case RotableSpike {}
+   case Switch       {} 
+   case Out          {}
+}
+
+type QJewel is variant {
+   case NoJewel {}
+   case QJewel  { field jpos // Pos
+                  field hits // Number 
+                }
+}
+
+type QBall is variant {
+   case NoBall  {}
+   case QBallAt { field bpos }  // Pos
+   case QBallTo { field bpos    // Pos
+                  field goingTo // Dir 
+                }
+}
+
+// ---------------------------
+//  Abbreviations
+// ---------------------------
+function cNW() { return(Corner(dir <- East))      }
+function cNE() { return(Corner(dir <- South))     }
+function cSE() { return(Corner(dir <- West))      }
+function cSW() { return(Corner(dir <- North))     }
+   
+function aNW() { return(Angle(dir <- East))       }
+function aNE() { return(Angle(dir <- South))      }
+function aSE() { return(Angle(dir <- West))       }
+function aSW() { return(Angle(dir <- North))      }
+
+function hT()  { return(Limit(pointsTo <- South)) }
+function hB()  { return(Limit(pointsTo <- North)) }
+function vL()  { return(Limit(pointsTo <- East))  }
+function vR()  { return(Limit(pointsTo <- West))  }
+
+// ---------------------------
+//  Detection functions
+// ---------------------------
+function isEmpty_(qelem)        { return(matching (qelem) select True  on Empty        False otherwise) }
+function isPearl_(qelem)        { return(matching (qelem) select True  on Pearl        False otherwise) }
+function isWall_(qelem)         { return(matching (qelem) select True  on Wall         False otherwise) }
+function isCorner_(qelem)       { return(matching (qelem) select True  on Corner       False otherwise) }
+function isAngle_(qelem)        { return(matching (qelem) select True  on Angle        False otherwise) }
+function isLimit_(qelem)        { return(matching (qelem) select True  on Limit        False otherwise) }
+function isPortal_(qelem)       { return(matching (qelem) select True  on Portal       False otherwise) }
+function isGate_(qelem)         { return(matching (qelem) select True  on Gate         False otherwise) }
+function isSpike_(qelem)        { return(matching (qelem) select True  on Spike        False otherwise) }
+function isMultispike_(qelem)   { return(matching (qelem) select True  on Multispike   False otherwise) }
+function isRotableSpike_(qelem) { return(matching (qelem) select True  on RotableSpike False otherwise) }
+function isSwitch_(qelem)       { return(matching (qelem) select True  on Switch       False otherwise) }
+function isOut_(qelem)          { return(matching (qelem) select True  on Out          False otherwise) }
+
+function isNoJewel_(jewel)      { return(matching (jewel) select True  on NoJewel      False otherwise) }
+
+function isNoBall_(qball)       { return(matching (qball) select True  on NoBall       False otherwise) }
+function isStaticBall_(qball)   { return(matching (qball) select True  on BallAt       False otherwise) }
+function isMovingBall_(qball)   { return(matching (qball) select True  on BallTo       False otherwise) }
+
+// ---------------------------
+//  Ball information
+// ---------------------------
+function hasBall_(quell)       { return(not isNoBall(ball(quell)))  }
+function hasMovingBall_(quell) { return(isMovingBall_(ball(quell))) }
+function ballPosOn_(quell)     { /* PRECOND: * hasBall_(quell) */     return(bpos(ball(quell)))   }
+function ballDirOn_(quell)     { /* PRECOND: hasMovingBall_(quell) */ return(goingTo(ball(quel))) }
+/* ============================================================================================================
+   END Quell-Model.gbs
+   ============================================================================================================
+*/

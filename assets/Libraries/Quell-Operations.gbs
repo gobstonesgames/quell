@@ -1,12 +1,24 @@
 /* ============================================================================================================
-   START QuellOperations.gbs
+   START Quell-Operations.gbs
    Operations to perform a step of movement (with all the needed changes)
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
-// REQUIRE: QuellRepresentation.gbs
-// REQUIRE: Quell-IO.gbs
+// REQUIRE: Quell-Model.gbs
+// REQUIRE: Quell-Representation.gbs
+// REQUIRE: Quell-Drawing.gbs
+// REQUIRE: Quell-Reading.gbs
    ============================================================================================================
 */
+// ---------
+// Quell I/O operations
+// ---------
+function  currentQuell()    { return (currentQLevel()) } /* PRECOND: there is a quell level represented in the Gobstones board */
+procedure DrawQuell_(quell) { DrawQLevel_(quell) }       /* PRECOND: Gobstones board is big enough to represent the quell board and the top bar */
+
+// ---------
+// Quell movement operations
+// ---------
 procedure ProcessMoveTo_(dir) { AuxProcessMoveTo_(just(dir)) }
 procedure ProcessMove()       { AuxProcessMoveTo_(Nothing)   }
 
@@ -299,6 +311,6 @@ function msgNotALimit()      { return(babel("QElement at the given position is n
 function msgNotABorder()     { return(babel("Limit at the given position is not a border"
                                           , "El Límite en la posición dada no es un borde"))    }
 /* ============================================================================================================
-   END QuellOperations.gbs
+   END Quell-Operations.gbs
    ============================================================================================================
 */

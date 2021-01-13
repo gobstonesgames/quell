@@ -2,16 +2,14 @@
    START Prelude.gbs
    General useful operations for a number of conveniencies
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
    ============================================================================================================
 */
 
 // ---------
 // Gobstones auxiliary functions
 // ---------
-procedure GoToCorner__(dir1, dir2) {
-  /* PRECOND:
-      * dir1 and dir2 are not equal and not opposite of each other
-  */                                            
+procedure GoToCorner__(dir1, dir2) { /* PRECOND: dir1 and dir2 are not equal and not opposite of each other */                                            
   GoToEdge(dir1)
   GoToEdge(dir2)
 }
@@ -29,15 +27,12 @@ function isVertical(dir)   { return (dir==North || dir==South) }
 function adjust_To_(val, max)             { return ((val+max) mod max) }
 function num_IsBetween_And_(n, low, high) { return(n>=low && n<=high)  }
 
-function delta(b) {
-  return (choose 1 when (b)
-                 0 otherwise) 
-}
+function delta(b) { return (choose 1 when (b) 0 otherwise) }
 
 // ---------
 // Math functions 
 // ---------
-function timesOf_In_(p,n) {
+function timesOf_In_(p,n) { 
   currentN     := n
   currentTimes := 0
   while (currentN>=p) {
@@ -70,7 +65,9 @@ function maxPowerOf_WithAccumPowLessThan_(n, p) {
 // ---------
 
 // Dir
-procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir)) }
+procedure DrawDir_With_(dir, color) { Drop__Times(color, codeOfDir_(dir))   }
+function  currentDirWith_(color)    { return(decodedDir_(numStones(color))) } /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
+
 function codeOfDir_(dir) {
   return (matching (dir) select
             1 on North
@@ -80,13 +77,7 @@ function codeOfDir_(dir) {
             boom(msgNotExpected("Direction")) otherwise)
 }
 
-function currentDirWith_(color) {
-  /* PRECOND: * there is a Dir represented (between 1 to 4 color stones) */
-  return(decodedDir_(numStones(color)))
-}
-
-function decodedDir_(code) {
-  /* PRECOND: * code is the coding of a Dir (between 1 and 4) */
+function decodedDir_(code) { /* PRECOND: code is the coding of a Dir (between 1 and 4) */
   return(matching (code) select
            North on 1
            East  on 2
@@ -100,25 +91,22 @@ procedure DrawNum_With_(n, color) { Drop__Times(color, n)    }
 function  currentNumWith_(color)  { return(numStones(color)) }
 
 // Bool
-procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b)) }
-function  codeOfBool_(b) {
+procedure DrawBool_With_(b, color) { Drop__Times(color, codeOfBool_(b))     }
+function  currentBoolWith_(color)  { return(decodedBool_(numStones(color))) } /* PRECOND: there is a bool represented in the current cell with the given color */
+
+function codeOfBool_(b) {
   return (choose 1 when (b)
                  0 otherwise)
 }
 
-function currentBoolWith_(color) {
-  /* PRECOND: * there is a bool represented in the current cell with the given color */
-  return(decodedBool_(numStones(color)))
-}
-
-function decodedBool_(code) {
-  /* PRECOND: * code is the coding of a Bool (either 0 or 1) */
+function decodedBool_(code) { /* PRECOND: code is the coding of a Bool (either 0 or 1) */
   return(matching (code) select
            True   on 1
            False  on 0
            boom(msgNotACodeFor_("Bool")) otherwise)
 }
 
+// [Dir]
 function codeOfDirs_(dirs) {
   /* OBS: the coding is a 0-less one */
   currentCode := 0
@@ -135,9 +123,9 @@ function decodedDirs_(code) {
    curCodes   := []
    currentPow := maxPowerOf_WithAccumPowLessThan_(4, code)
    remCode    := code
-   while (currentPow > 0) { // (code-remCode) is encoded in curCodes (shifted by currentPow)
+   while (currentPow > 0) {                   // (code-remCode) is encoded in curCodes (shifted by currentPow)
      curCode    := timesOf_In_(currentPow, remCode)
-     if (curCode == 0) { // As a code digit cannot be 0, 1 must be substracted of previous calculus
+     if (curCode == 0) {                      // As a code digit cannot be 0, 1 must be substracted of previous calculus
          curCodes := substractOneFromDirCodes_(curCodes)
          remCode  := remCode + currentPow * 4 // remCode needs adjustment too, to keep the invariant
          curCode  := 4
@@ -158,8 +146,8 @@ function mapDecodeDirsTo_(codes) {
 }
 
 function substractOneFromDirCodes_(codes) {
-  /* PRECOND: codes is not [] or [1] 
-     OBS: substracts one in a 0-less representation in base 4
+  /* PURPOSE: substracts one in a 0-less representation in base 4
+     PRECOND: codes is not []  
   */
   curCode  := head(codes)
   curCodes := tail(codes)
@@ -196,15 +184,8 @@ type Maybe is variant {
   case Just     { field fromJust }  
 }
 
-function isNothing(mv) {
-  return(matching (mv) select
-           True on Nothing
-           False otherwise)
-}
-
-function just(elem) {
-  return (Just(fromJust <- elem))
-}
+function isNothing(mv) { return(matching (mv) select True on Nothing False otherwise) }
+function just(elem)    { return (Just(fromJust <- elem)) }
 
 function firstOf_Or_(md1, md2) {
  return(matching (md1) select
@@ -212,13 +193,10 @@ function firstOf_Or_(md1, md2) {
           md2 otherwise)
 }
 
-
 procedure DrawMNum_With_(mNum, color) {
-  Drop__Times(color
-            , matching (mNum) select
-                1 + fromJust(mNum) on Just
-                0                  otherwise
-  )
+  Drop__Times(color, matching (mNum) select
+                       1 + fromJust(mNum) on Just
+                       0                  otherwise)
 }
 
 function currentMNumWith_(color) {
@@ -227,21 +205,15 @@ function currentMNumWith_(color) {
             just(numStones(color)-1)  otherwise)
 }
 
-procedure DrawMDir_With_(mdir, color) {
-  Drop__Times(color, codeOfMDir_(mdir))
-}
-
+procedure DrawMDir_With_(mdir, color) { Drop__Times(color, codeOfMDir_(mdir)) }
 function codeOfMDir_(mdir) {
   return (matching (mdir) select codeOfDir_(fromJust(mdir)) on Just
-                                 5                          otherwise)
+                                 0                          otherwise)
 }
 
-function currentMDirWith_(color) {
-  /* PRECOND:
-       * there is a MDir represented (between 1 to 5 color stones)
-  */
-  return(choose Nothing                      when (numStones(color)==5)
-                just(currentDirWith_(color)) otherwise)
+function currentMDirWith_(color) { /* PRECOND: there is a MDir represented (between 1 to 5 color stones) */
+  return(choose just(currentDirWith_(color)) when (hasStones(color))
+                Nothing                      otherwise)
 }
 
 // ---------
@@ -295,20 +267,18 @@ function hOffset (dir) {
              0 otherwise) 
 }
 
-procedure DrawPos_With_(vec, color) {
-  Drop__Times(color, codeOfPos_(vec))
-}
-
-function codeOfPos_(vec) {
-  /* PRECOND: * col of vec <= 999 */
-  return (row(vec)*1000 + col(vec))
-}
+procedure DrawPos_With_(vec, color) { Drop__Times(color, codeOfPos_(vec)) }
 
 function currentPosWith_(color) {
   code := numStones(color)
   return (Pos(row <- code div 1000
              ,col <- code mod 1000
   ))
+}
+
+function codeOfPos_(vec) {
+  /* PRECOND: col of vec <= 99 */
+  return (row(vec)*100 + col(vec))
 }
 
 // ---------
@@ -321,9 +291,8 @@ type Gender is variant {
    // case None {}
 }
 
-procedure DrawGender_With_(gender, color) {
-   Drop__Times(color, codeOfGender_(gender))
-}
+procedure DrawGender_With_(gender, color) { Drop__Times(color, codeOfGender_(gender)) }
+function  currentGenderWith_(color)       { return(decodeGender_(numStones(color)))   } /* PRECOND: there is a gender represented (between 1 to 2 color stones) */
 
 function codeOfGender_(gender) {
   return (matching (gender) select
@@ -332,17 +301,7 @@ function codeOfGender_(gender) {
             boom(msgNotExpected("Gender")) otherwise)
 }
 
-function currentGenderWith_(color) {
-  /* PRECOND:
-       * there is a gender represented (between 1 to 2 color stones)
-  */
-  return(decodeGender_(numStones(color)))
-}
-
-function decodeGender_(code) {
-  /* PRECOND:
-       * code is the coding of a Gender (between 1 and 2)
-  */
+function decodeGender_(code) { /* PRECOND: code is the coding of a Gender (between 1 and 2) */
   return(matching (code) select
            Masculine  on 1
            Femenine   on 2
@@ -352,18 +311,9 @@ function decodeGender_(code) {
 // ---------
 // Board traversal operations 
 // ---------
-procedure StartBoardTraverseTo_And_(mainDir, secDir) {
-  GoToCorner__(opposite(mainDir), opposite(secDir))
-}
-
-function atEndOfBoardTraverseTo_And_(mainDir, secDir) {
-  return(not canMove(mainDir) && not canMove(secDir))
-}
-
-procedure GoToNextCellInBoardTraverseTo_And_(mainDir, secDir) {
-  /* PRECOND:
-     * head is not at end of a board traverse to mainDir and secDir
-  */
+procedure StartBoardTraverseTo_And_(mainDir, secDir)   { GoToCorner__(opposite(mainDir), opposite(secDir))   }
+function  atEndOfBoardTraverseTo_And_(mainDir, secDir) { return(not canMove(mainDir) && not canMove(secDir)) }
+procedure GoToNextCellInBoardTraverseTo_And_(mainDir, secDir) { /* PRECOND: head is not at end of a board traverse to mainDir and secDir */
   if (canMove(mainDir)) { Move(mainDir) }
   else                  { GoToEdge(opposite(mainDir))
                           Move(secDir)
@@ -373,6 +323,20 @@ procedure GoToNextCellInBoardTraverseTo_And_(mainDir, secDir) {
 // ---------
 // List functions 
 // ---------
+function lengthOf_(xs) {
+  counted := 0
+  foreach elem in xs { counted := counted+1 }
+  return (counted)
+}
+
+function elem_IsIn_(x, xs) {
+  current := xs
+  while (not isEmpty(current) && x/=head(current)) {
+    current := tail(current)
+  }
+  return (not isEmpty(current))
+}
+
 function elemAtPos_In_(pos,xss) {
   /* PRECOND:
        * there are at least 1+row(pos) elements in xss
@@ -382,55 +346,36 @@ function elemAtPos_In_(pos,xss) {
   return(elemAtIndex_In_(col(pos), row))
 }
 
-function elemAtIndex_In_(idx,xs) { 
-  /* PRECOND: * there are at least 1+idx elements in xs */
-  return(list_At_(xs,idx)) 
-}
+function elemAtIndex_In_(idx,xs) { return(list_At_(xs,idx)) } /* PRECOND: there are at least 1+idx elements in xs */
 
-function lengthOf_(xs) {
-  counted := 0
-  foreach elem in xs { counted := counted+1 }
-  return (counted)
-}
-
-function list_At_(xs, idx) {
-  /* PRECOND: * there are at least 1+idx elements in xs */
+function list_At_(xs, idx) { /* PRECOND: there are at least 1+idx elements in xs */
   currentList := xs
   repeat (idx) { currentList := tail(currentList) }
   return (head(currentList))
 }
 
-function column_Of_(col, xss) {
-  /* PRECOND:
-       * all elements.of xss have at least col+1 elements
-  */
+function column_Of_(col, xss) { /* PRECOND: all elements of xss have at least col+1 elements */
   columnSeen := [ ]
   foreach row in xss { columnSeen := columnSeen ++ [ elemAtIndex_In_(col, row) ] }
   return (columnSeen)
 }
 
-function set_AtPos_To_(xss, pos, x) {
+function set_AtPos_To_(xss, pos, x) { /* PRECOND: xss has an element at pos */
   row    := list_At_(xss, row(pos))
   newRow := set_AtIndex_To_(row, col(pos), x)
   return(set_AtIndex_To_(xss, row(pos), newRow))
 }
 
-function set_AtIndex_To_(xs, i, x) {
-  /* PRECOND:
-       * xs has at least i+1 elements
-  */
+function set_AtIndex_To_(xs, i, x) { /* PRECOND: xs has at least i+1 elements */
   let (prev, oldX, post) := split_At_(xs, i)
   return(prev ++ [x] ++ post)
 }
 
-function split_At_(xs, i) {
-  /* PRECOND: 
-       * xs has at least i+1 elements
-  */
-  seen := [ ]
+function split_At_(xs, i) { /* PRECOND: xs has at least i+1 elements */
+  seen  := [ ]
   toSee := xs
   repeat (i) { 
-     seen := seen ++ [ head(toSee) ]
+     seen  := seen ++ [ head(toSee) ]
      toSee := tail(toSee)
   }
   return(seen, head(toSee), tail(toSee))
@@ -452,10 +397,10 @@ function replicate__Times(x, n) {
 
 function listFrom_To_(low,high) {
   processed := []
-  current := low
+  current   := low
   repeat (high - low + 1) {
     processed := [current] ++ processed
-    current := current + 1
+    current   := current + 1
   }
   return (processed)
 }
@@ -467,11 +412,11 @@ type Stack is record {
   field data  // [ Elements ]
 }
 
-function emptyS()     { return (Stack(data <- [ ]))             }
-function isEmptyS(st) { return(not isEmpty(data(st)))           }
-function push(x, st)  { return (Stack(data <- [x] ++ data(st))) }
-function top(st)      { return (head(data(st)))                 } /* PRECOND: st is not empty */
-function pop(st)      { return (Stack(data <- tail(data(st))))  } /* PRECOND: st is not empty */
+function emptyS()     { return(Stack(data <- [ ]))             }
+function isEmptyS(st) { return(not isEmpty(data(st)))          }
+function push(x, st)  { return(Stack(data <- [x] ++ data(st))) }
+function top(st)      { return(head(data(st)))                 } /* PRECOND: st is not empty */
+function pop(st)      { return(Stack(data <- tail(data(st))))  } /* PRECOND: st is not empty */
 
 // ---------
 // ERROR MESSAGES

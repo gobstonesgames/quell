@@ -1,69 +1,12 @@
 /* ============================================================================================================
-   START Quell-IO.gbs
-   Operations to draw and read a Quell level from the board
+   START Quell-Reading.gbs
+   Operations to read a Quell level from the board
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
-// REQUIRE: QuellRepresentation.gbs
+// REQUIRE: Quell-Model.gbs
+// REQUIRE: Quell-Representation.gbs
    ============================================================================================================
-   TO-DO: Add a top bar to the board representation (in order to add the solution, the numMoves, and represent spikesDir in a better way)
-*/
-
-// ---------
-// Quell I/O operations
-// ---------
-function currentQuell() {
-  /* PRECOND: * there is a quell level represented in the Gobstones board */
-  return (currentQLevel())
-}
-
-procedure WriteQuell_(quell) {
-  /* PRECOND: * Gobstones board is big enough to represent the quell board */
-  DrawQLevel_(quell)
-}
-
-// ---------
-// Representation
-// ---------
-/*
-  The ball is represented with ballColor() stones (standard representation for MDir:, 1 to 5 stones:
-    + moving North, 1 or 6 stones
-    + moving East,  2 or 7 stones
-    + moving South, 3 or 8 stones
-    + moving West,  4 or 9 stones
-    + not moving,   5 stones)
-     
-   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
-    + Empty, no qelem stones
-    + Pearl,      1 stone
-    + Wall,       2 stones
-    + Box,        3 stones
-    + Limit,      4 stones
-                     * isCorner, attrA stones (1-4 for corners, 5-8 for angles)
-                     * pointsTo, attrB stones 
-    + Portal, 5 stones
-                     * doorA,    attrA stones
-                     * doorB,    attrB stones
-    + Multispike, 6 stones
-    + Spike,      7 stones
-                     * rotable,  attrA stones 
-    + Switch,     8 stones
-    + Gate,       9 stones
-                     * open,     attrA stones
-    + Out,       10 stones (or 110 for special case)
-  
-  QLevel info is represented at top row with 10x qelem stones (x the col Number) -- TO BE DONE
-    * cell  0 at column 0 encode spikesDir in attrA stones
-    * cell  1 at column 1 encode numMoves in attrA stones (100 for overload)
-    * cell  2 at column 2 encode minMoves in attrA stones (100 for overload)
-    * cell  0 at column 3 encode jewel position in attrAStones
-    * cells 3 (or 0 if not used) from column 4 to 3-from-East encode solution in attrA and attrB stones 
-           ([Dir] is encoded as a 0-less number in base 4, represented in base 100 in low first pairs of digits in order AB)
-    * cell  4 at column 2 from East encode if jewel was found in attrB stones
-    * cell  5 at column 1 from East encode numPearls in attrA stones
-    * cell  0 at East edge with no extra information
-
-  The jewel is represented on its position if it was not found, using
-    + hitsReceived, attrA stones
 */
 
 // ---------
@@ -78,7 +21,7 @@ function currentQLevel() {
   let (curBoard, checkNumPearls)             := currentQBoard()
   let (curBallMPos, curBallMDir)             := currentQBallInfo()
   curJewelInfo                               := currentQJewel(curJewelFound, curJewelPos)
-  Assert_OrFail_(curNumPearls==checkNumPearls, msgInvalidQuell())
+  Assert_OrFail_(curNumPearls==checkNumPearls, msgInvalidQuellOnTheBoard())
   return (QuellLevel(board     <- curBoard
                    , spikesDir <- curSpikesDir
                    , jewel     <- curJewelInfo
@@ -279,172 +222,6 @@ procedure AddBallVisualIndicationTo_(dir) {
 }
 
 // ---------
-// Drawing operations
-// ---------
-procedure DrawQLevel_(quell) {
-  DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
-  DrawQInfo_(quell)
-  DrawQJewel_(jewel(quell))
-  DrawQBall_To_(ball(quell), inTransit(quell))
-}
-
-// Level 1
-procedure DrawQInfo_(quell) {
-  GoToEdge(West)  EncodeTopMDir_At_(spikesDir(quell), 0)
-  Move(East)      EncodeTopNum_At_(numMoves(quell),1)
-  Move(East)      EncodeTopNum_At_(fromJust(minMoves(quell)),2)
-  Move(East)      EncodeTopPos_At_(jpos(jewel(quell)), 0)
-  Move(East)      EncodeTopDirs_At_(solution(quell), 3)
-   
-  GoToEdge(East)  MarkTopCell_(0)
-  Move(West)      EncodeTopNum_At_(numPearls(quell),5)
-  Move(West)      EncodeTopBool_At_(found(jewel(quell)), 4)  
-  Move(West)      PadEmptyCellAs_(0)
-}
-
-procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
-  /* PRECOND: * the board has at least one qelem */
-  GoToCorner__(South, West)
-  foreach row in board {
-    DrawQRow_WithSpikesTo_(row, spikesDir)
-    Move(North)
-  }
-}
-
-procedure DrawQBall_To_(ball, mdir) {
-   if (not isNothing(ball)) {
-     pos := fromJust(ball)
-     GoToCell_(pos)
-     DrawBall_(mdir)
-   }
-}
-
-procedure DrawQJewel_(jewel) {
-  GoToCell_(jpos(jewel))
-  Drop__Times(attrAColor(), 1+hitsReceived(jewel))
-  DrawBool_With_(found(jewel), attrBColor())
-}
-
-// Level 2
-
-// Top row
-procedure MarkTopCell_(i) { Drop__Times(qelemColor(), 100+i) }
-procedure EncodeTopBool_At_(b ,i) { MarkTopCell_(i)  DrawBool_With_(b , attrBColor()) }
-procedure EncodeTopMDir_At_(md,i) { MarkTopCell_(i)  DrawMDir_With_(md, attrAColor()) }
-procedure EncodeTopPos_At_(pos,i) { MarkTopCell_(i)  DrawPos_With_(pos, attrAColor()) }
-
-procedure EncodeTopDirs_At_(dirs, i) {
-   code := codeOfDirs_(dirs)
-   DrawTopCode_InBase_With_And_As_(code, 100, attrAColor(), attrBColor(), i)
-}
-
-procedure EncodeTopMNum_At_(mn, i) { MarkTopCell_(i) DrawMNum_With_(mn, attrAColor()) }
-procedure EncodeTopNum_At_(n, i)   {
-  MarkTopCell_(i)
-  if (n < 100) { DrawNum_With_(n, attrAColor())   } 
-   else        { DrawNum_With_(100, attrAColor()) }
-}
-
-procedure PadEmptyCellAs_(i) {
-   while(not isCellAtTopRow()) {
-      MarkTopCell_(i) 
-      Move(West)
-   }
-}
-
-procedure DrawTopCode_InBase_With_And_As_(code, base, colorA, colorB, i) {
-  currentColor := colorA
-  currentCode  := code
-  while (currentCode > 0) {
-    currentDigit := currentCode mod base
-    currentCode  := currentCode div base
-    DrawNum_With_(currentDigit, currentColor)
-    if (currentColor == colorA) { MarkTopCell_(i)  currentColor := colorB } 
-     else                       { Move(East)       currentColor := colorA }
-  }
-}
-
-procedure GoToTopRow() {
-  GoToCorner__(South, West)
-  while (canMove(North) && not atTopRow()) { Move(North) }
-}
-
-function atTopRow ()      { return(isCellAtTopRow())               }
-function isCellAtTopRow() { return(numStones(qelemColor()) >= 100) }
-
-
-// Ball
-procedure DrawBall_(mdir) {
-  DrawMDir_With_(mdir, ballColor())
-}
-
-// Board
-procedure DrawQRow_WithSpikesTo_(row, spikesDir) {
-  /* PRECOND: * the row has at least one element */
-  GoToEdge(West)
-  DrawQelem_WithSpikesTo_(head(row), spikesDir)
-  foreach qelem in tail(row) {
-    Move(East)
-    DrawQelem_WithSpikesTo_(qelem, spikesDir)  
-  }
-}
-
-procedure DrawQelem_WithSpikesTo_(qelem, spikesDir) {
-  Drop__Times(qelemColor(), codeOfQelem_(qelem))
-  switch (qelem) to {
-    Box(gender)             -> { DrawGender_With_(gender   , attrAColor()) }
-    Limit(corner, pointsTo) -> { DrawCorner_With_(corner   , attrAColor())
-                                 DrawMDir_With_  (pointsTo , attrBColor()) }
-    Portal(doorA, doorB)    -> { DrawPos_With_   (doorA    , attrAColor())
-                                 DrawPos_With_   (doorB    , attrBColor()) }
-    Spike(rotable)          -> { DrawMDir_With_  (rotable  , attrAColor()) }
-    Switch()                -> { DrawMDir_With_  (spikesDir, attrAColor()) }
-    Gate(open)              -> { DrawBool_With_  (open     , attrAColor()) }
-    _                       -> { }
-    }
-}
-
-procedure DrawCorner_With_(corner, color) {
-  switch (corner) to {
-    Nothing    -> { Drop__Times(color, 9) }
-    Just(d1d2) -> { d1 := fst(d1d2)
-                    d2 := snd(d1d2)
-                    if     (d2==nextDir(d1)) { DrawDir_With_(d1,color)              }
-                    elseif (d2==prevDir(d1)) { Drop__Times(color, 4+codeOfDir_(d1)) }
-                    else                     { BOOM(msgInvalidQuell())              }
-                  }
-  }
-}
-
-// ---------
-// Codes
-// ---------
-function codeOfQelem_(qelem) {
-  return (matching (qelem) select
-             0 on Empty
-             1 on Pearl
-             2 on Wall
-             3 on Box
-             4 on Limit
-             5 on Portal
-             6 on Multispike
-             7 on Spike
-             8 on Switch
-             9 on Gate
-            10 on Out
-            boom(msgNotExpected("QElem")) otherwise
-  )
-}
-
-// ---------
-// Colors
-// ---------
-function ballColor()  { return(Blue)  }
-function qelemColor() { return(Black) }
-function attrAColor() { return(Red)   }
-function attrBColor() { return(Green) }
-
-// ---------
 // Error messages
 // ---------
 function msgNoQuellLevel() { 
@@ -457,12 +234,12 @@ function msgNoQElement() {
               ,"No hay un QElement representado en la celda actual"))
 }
 
-function msgInvalidQuell() { 
-  return(babel("Quell representation is invalid"
-              ,"La representación de Quell es inválida"))
+function msgInvalidQuellOnTheBoard() { 
+  return(babel("Quell representation on the board is invalid"
+              ,"La representación de Quell en el tablero es inválida"))
 }
 
 /* ============================================================================================================
-   END Quell-IO.gbs
+   END Quell-Reading.gbs
    ============================================================================================================
 */
