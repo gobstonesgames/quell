@@ -1,9 +1,16 @@
 /* ============================================================================================================
-   START QuellOperations.gbs
+   START Quell-Operations.gbs
    Operations to perform a step of movement (with all the needed changes)
+
+   This version follows REPL style (Read-Eval-Print-Loop). 
+   The board is used only to show the information, and to store the state of the game between loops. 
+   All the game operations are performed on the model (which has some problems that needs fixing if this style is to be used).
+   However, this approach shown inefficient, and for that reason we will explore other styles, where the board
+   is used for processing.
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
-// REQUIRE: QuellRepresentation.gbs
+// REQUIRE: Quell-Model.gbs
 // REQUIRE: Quell-IO.gbs
    ============================================================================================================
 */
@@ -299,6 +306,6 @@ function msgNotALimit()      { return(babel("QElement at the given position is n
 function msgNotABorder()     { return(babel("Limit at the given position is not a border"
                                           , "El Límite en la posición dada no es un borde"))    }
 /* ============================================================================================================
-   END QuellOperations.gbs
+   END Quell-Operations.gbs
    ============================================================================================================
 */

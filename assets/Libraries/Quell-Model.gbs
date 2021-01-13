@@ -1,7 +1,8 @@
 /* ============================================================================================================
-   START QuellRepresentation.gbs
+   START Quell-Model.gbs
    Definition of the datatypes representing a Quell level
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
    ============================================================================================================
 */
@@ -134,6 +135,6 @@ function ballPosOn_(quell) {
   return (fromJust(ball(quell)))
 }
 /* ============================================================================================================
-   END QuellRepresentation.gbs
+   END Quell-Model.gbs
    ============================================================================================================
 */

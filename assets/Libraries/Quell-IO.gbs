@@ -2,8 +2,9 @@
    START Quell-IO.gbs
    Operations to draw and read a Quell level from the board
 // REQUIRE: Babel.gbs
+// REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
-// REQUIRE: QuellRepresentation.gbs
+// REQUIRE: Quell-Model.gbs
    ============================================================================================================
    TO-DO: Add a top bar to the board representation (in order to add the solution, the numMoves, and represent spikesDir in a better way)
 */
