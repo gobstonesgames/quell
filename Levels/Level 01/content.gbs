@@ -1,10 +1,6 @@
 interactive program {
-  INIT       -> { MarkAsTutorial() 
-                  WriteQuell_(level())        
-                }
-  K_R        -> { MarkAsTutorial() 
-                  WriteQuell_(level())        
-                }
+  INIT       -> { DrawQuell_(level())   }
+  K_R        -> { DrawQuell_(level())   }
   K_DOWN     -> { ProcessMoveTo_(South) }
   K_UP       -> { ProcessMoveTo_(North) }
   K_LEFT     -> { ProcessMoveTo_(West)  }    

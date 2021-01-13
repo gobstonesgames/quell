@@ -1,27 +1,28 @@
 function level() {
   return(QuellLevel(
-     board     <- reverse(boardT01())
-   , spikesDir <- Nothing
-   , jewel     <- QJewel(jpos <- pos(9,3), hitsReceived <- 0, found <- True)
-   , ball      <- just(pos(3,4))
-   , inTransit <- Nothing
-   , numPearls <- 4
-   , solution  <- [South, East, North]
-   , minMoves  <- just(3)
-   , numMoves  <- 0
+     isTutorial    <- True
+   , board         <- boardT01()
+   , solution      <- [South, East, North]
+   , minMoves      <- 3
+   , jewel         <- NoQJewel
+   , spikesDir     <- Nothing
+   , boxes         <- []
+   , ball          <- QBallAt(bpos <- pos(3,4))
+   , numMoves      <- 0
+   , numRightMoves <- 0
   ))
 }
 
 function boardT01() { 
   // [[QElem]], size=pos(15,8)
   return(
-   [[Out       , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        , Out        , Out        , cNW()      , lH_(South) , lH_(South) , lH_(South) , cNE()      , Out        ]
-   ,[cNW()     , aSE_(East) , Wall       , Wall       , Wall       , aSW()      , cNE()      , Out        , cNW()      , aSE()      , Wall       , Wall       , Wall       , aSW()      , cNE()      ]
-   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , lV_(West)  , Out        , lV_(East)  , Wall       , Empty      , Empty      , Pearl      , Wall       , lV_(West)  ]
-   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , aSW_(West) , lH_(South) , aSE_(East) , Wall       , Empty      , Wall       , Empty      , Wall       , lV_(West)  ]
-   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Wall       , Wall       , Wall       , Wall       , Wall       , Empty      , Empty      , Empty      , Wall       , lV_(West)  ]
-   ,[lV_(East) , Wall       , Empty      , Empty      , Empty      , Empty      , Pearl      , Pearl      , Pearl      , Empty      , Empty      , Empty      , Empty      , Wall       , lV_(West)  ]
-   ,[cSW()     , aNE_(East) , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , Wall       , aNW_(West) , cSE()      ]
-   ,[Out       , cSW()      , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , lH_(North) , cSE()      , Out        ]
+   [[Out  , cNW(), hT() , hT() , hT() , cNE(), Out  , Out  , Out  , cNW(), hT() , hT() , hT() , cNE(), Out   ]
+   ,[cNW(), aSE(), Wall , Wall , Wall , aSW(), cNE(), Out  , cNW(), aSE(), Wall , Wall , Wall , aSW(), cNE() ]
+   ,[vL() , Wall , Empty, Empty, Empty, Wall , vR() , Out  , vL() , Wall , Empty, Empty, Pearl, Wall , vR()  ]
+   ,[vL() , Wall , Empty, Empty, Empty, Wall , aSW(), hT() , aSE(), Wall , Empty, Wall , Empty, Wall , vR()  ]
+   ,[vL() , Wall , Empty, Empty, Empty, Wall , Wall , Wall , Wall , Wall , Empty, Empty, Empty, Wall , vR()  ]
+   ,[vL() , Wall , Empty, Empty, Empty, Empty, Pearl, Pearl, Pearl, Empty, Empty, Empty, Empty, Wall , vR()  ]
+   ,[cSW(), aNE(), Wall , Wall , Wall , Wall , Wall , Wall , Wall , Wall , Wall , Wall , Wall , aNW(), cSE() ]
+   ,[Out  , cSW(), hB() , hB() , hB() , hB() , hB() , hB() , hB() , hB() , hB() , hB() , hB() , cSE(), Out   ]
    ])
 }
