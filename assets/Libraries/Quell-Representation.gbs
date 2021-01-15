@@ -12,44 +12,48 @@
 // Representation
 // ---------
 /*
-   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
-    + Empty       ,  no qelem stones
-    + Wall        ,  1 stones
-    + Corner      ,  2 stones  * dir     , attrA stones
-    + Angle       ,  3 stones  * dir     , attrA stones
-    + Limit       ,  4 stones  * pointsTo, attrA stones 
-    + Portal      ,  5 stones  * target  , attrA stones
-                               * id      , attrB stones
-    + Gate        ,  6 stones  * open    , attrB stones
-    + Spike       ,  7 stones  * dir     ,  attrA stones 
-    + Multispike  ,  8 stones
-    + Rotablespike,  9 stones
-    + Switch      , 10 stones
-    + Out         , 11 stones
-
-    + Pearl                    *       3 attrB stones (to avoid clashes with Boxes)
-    + Box                      * gender, attrB stones (must be equal to Pearl representation, and different from attributes at Gates, Portals or Switches)
-    + Jewel                    * hits  , attrA stones (must be different from Pearl representation)
-  
-  The ball is represented with ballColor() stones 
-    + moving North,       1 stone
-    + moving East,        2 stones
-    + moving South,       3 stones
-    + moving West,        4 stones
-    + not moving,         5 stones
-    + with hint to North, 6 stones
-    + with hint to East,  7 stones
-    + with hint to South, 8 stones
-    + with hint to West,  9 stones
-
   QLevel info is represented at top row with 10x qelem stones (x the col Number) 
-    * cell  0 at column 0 encode bpos (or 0 if there is no ball) in attrA stones
     * cell  1 at column 1 encode numMoves in attrA stones (100 for overload)
     * cell  2 at column 2 encode minMoves in attrA stones (up to 29 -- more are ignored)
-    * cell  4 at column 2 from East encode jewelFound in attrB stones
-    * cell  6 at column 1 from East encode numPearls in attrA stones
+    * cell  3 at column 2 from East encode jewelFound in attrB stones
+                                       and jewel existance in attrA stones
+    * cell  4 at column 1 from East encode numPearls in attrA stones
                                        and numRightMoves in attrB stones
     * cell  0 at East edge encode spikesDir in attrA stones
+
+  QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
+    + Empty       ,  no qelem stones
+    + Corner      ,  1 stone   * dir     , attrA stones
+    + Angle       ,  2 stones  * dir     , attrA stones
+    + Limit       ,  3 stones  * pointsTo, attrA stones 
+    + Portal      ,  4 stones  * target  , attrA stones
+                               * id      , attrB stones
+    + Gate        ,  5 stones  * open    , attrB stones
+    + Switch      ,  6 stones  * spikesDir, attrA stones
+    + Rotablespike,  7 stones  * spikesDir, attrA stones
+    + Spike       ,  8 stones  * dir     , attrA stones 
+    + Multispike  ,  9 stones
+    + Wall        , 10 stones
+    + Out         , 11 stones
+
+    + Pearl                    *       1 attrB stones (to avoid clashes with Boxes)
+    + Box                      * gender, 10+attrB stones (must be equal to Pearl representation, and different from attributes at Gates, Portals or Switches)
+    + Jewel                    * hits  , attrA stones (must be different from Pearl representation, because it may also appear on Empty)
+  
+  The ball is represented with ballColor() stones 
+    + moving North                 ,  1 stone
+    + moving East                  ,  2 stones
+    + moving South                 ,  3 stones
+    + moving West                  ,  4 stones
+    + not moving                   ,  5 stones
+    + not moving with hint to North,  6 stones (5+1)
+    + not moving with hint to East ,  7 stones (5+2)
+    + not moving with hint to South,  8 stones (5+3)
+    + not moving with hint to West ,  9 stones (5+4)
+    + beaming while moving North   , 11 stones (10+1)
+    + beaming while moving East    , 12 stones (10+2)
+    + beaming while moving South   , 13 stones (10+3)
+    + beaming while moving West    , 14 stones (10+4)
 */
 
 // ---------
@@ -59,6 +63,28 @@ function ballColor()  { return(Blue)  }
 function qelemColor() { return(Black) }
 function attrAColor() { return(Green) }
 function attrBColor() { return(Red)   }
+
+// ---------
+// Codes
+// ---------
+function codeOfQelem_(qelem) {
+  return (matching (qelem) select
+             0 on Empty
+             0 on Pearl   // Pearls are always on Empty cells, and drawn with attribute colors
+             1 on Corner
+             2 on Angle
+             3 on Limit
+             4 on Portal
+             5 on Gate
+             6 on Spike
+             7 on Multispike
+             8 on RotableSpike
+             9 on Switch
+            10 on Wall
+            11 on Out
+            boom(msgNotExpected("QElem")) otherwise
+  )
+}
 /* ============================================================================================================
    END Quell-Representation.gbs
    ============================================================================================================

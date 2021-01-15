@@ -1,3 +1,4 @@
+{-
 /* ============================================================================================================
    START Quell-Reading.gbs
    Operations to read a Quell level from the board
@@ -238,8 +239,8 @@ function msgInvalidQuellOnTheBoard() {
   return(babel("Quell representation on the board is invalid"
               ,"La representación de Quell en el tablero es inválida"))
 }
-
 /* ============================================================================================================
    END Quell-Reading.gbs
    ============================================================================================================
 */
+-}

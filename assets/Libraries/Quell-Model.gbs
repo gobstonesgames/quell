@@ -35,6 +35,7 @@ type QuellLevel is record {
    field ball          // QBall
    field numMoves      // Number
    field numRightMoves // Maybe(Number)
+   field numPearls     // Number
 }
 
 type QElem is variant {
@@ -44,10 +45,10 @@ type QElem is variant {
    case Corner       { field dir }        // Dir
    case Angle        { field dir }        // Dir
    case Limit        { field pointsTo }   // Dir
-   case Portal       { field id           // Number
+   case Portal       { field id           // Number (less than 10)
                        field target       // Pos
                      }
-   case Gate         { field open }       // Bool
+   case Gate         { field closed }     // Bool
    case Spike        { field pointsTo }   // Dir
    case Multispike   {}
    case RotableSpike {}
@@ -58,7 +59,7 @@ type QElem is variant {
 type QJewel is variant {
    case NoJewel {}
    case QJewel  { field jpos // Pos
-                  field hits // Number 
+                  field hits // Number (usually 4 if Wall, and 1 if visible)
                 }
 }
 
@@ -67,6 +68,7 @@ type QBall is variant {
    case QBallAt { field bpos }  // Pos
    case QBallTo { field bpos    // Pos
                   field goingTo // Dir 
+                  field beaming // Bool
                 }
 }
 
@@ -106,18 +108,27 @@ function isSwitch_(qelem)       { return(matching (qelem) select True  on Switch
 function isOut_(qelem)          { return(matching (qelem) select True  on Out          False otherwise) }
 
 function isNoJewel_(jewel)      { return(matching (jewel) select True  on NoJewel      False otherwise) }
+function isJewel_(jewel)        { return(matching (jewel) select True  on QJewel       False otherwise) }
 
 function isNoBall_(qball)       { return(matching (qball) select True  on NoBall       False otherwise) }
-function isStaticBall_(qball)   { return(matching (qball) select True  on BallAt       False otherwise) }
-function isMovingBall_(qball)   { return(matching (qball) select True  on BallTo       False otherwise) }
+function isBall_(qball)         { return(matching (qball) select False on NoBall       True  otherwise) }
+function isStaticBall_(qball)   { return(matching (qball) select True  on QBallAt      False otherwise) }
+function isMovingBall_(qball)   { return(matching (qball) select True  on QBallTo      False otherwise) }
+
+// ---------------------------
+//  Jewel information
+// ---------------------------
+function hasJewel_(quell)      { return(not isNoJewel_(jewel(quell))) }
+function jewelPosOn_(quell)    { return(jpos(jewel(quell)))           } /* PRECOND: * hasJewel_(quell) */     
 
 // ---------------------------
 //  Ball information
 // ---------------------------
-function hasBall_(quell)       { return(not isNoBall(ball(quell)))  }
+function hasBall_(quell)       { return(not isNoBall_(ball(quell))) }
 function hasMovingBall_(quell) { return(isMovingBall_(ball(quell))) }
-function ballPosOn_(quell)     { /* PRECOND: * hasBall_(quell) */     return(bpos(ball(quell)))   }
-function ballDirOn_(quell)     { /* PRECOND: hasMovingBall_(quell) */ return(goingTo(ball(quel))) }
+function ballPosOn_(quell)     { return(bpos(ball(quell)))          } /* PRECOND: * hasBall_(quell) */     
+function ballDirOn_(quell)     { return(goingTo(ball(quel)))        } /* PRECOND: hasMovingBall_(quell) */ 
+function ballBeamingOn_(quell) { return(beaming(ball(quel)))        } /* PRECOND: hasMovingBall_(quell) */ 
 /* ============================================================================================================
    END Quell-Model.gbs
    ============================================================================================================

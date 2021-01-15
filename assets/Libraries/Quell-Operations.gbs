@@ -13,9 +13,10 @@
 // ---------
 // Quell I/O operations
 // ---------
-function  currentQuell()    { return (currentQLevel()) } /* PRECOND: there is a quell level represented in the Gobstones board */
+//function  currentQuell()    { return (currentQLevel()) } /* PRECOND: there is a quell level represented in the Gobstones board */
 procedure DrawQuell_(quell) { DrawQLevel_(quell) }       /* PRECOND: Gobstones board is big enough to represent the quell board and the top bar */
 
+{-
 // ---------
 // Quell movement operations
 // ---------
@@ -310,6 +311,7 @@ function msgNotALimit()      { return(babel("QElement at the given position is n
                                           , "El QElement en la posición dada no es un Límite")) }
 function msgNotABorder()     { return(babel("Limit at the given position is not a border"
                                           , "El Límite en la posición dada no es un borde"))    }
+-}
 /* ============================================================================================================
    END Quell-Operations.gbs
    ============================================================================================================

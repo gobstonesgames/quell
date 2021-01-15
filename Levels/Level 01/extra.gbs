@@ -4,12 +4,13 @@ function level() {
    , board         <- boardT01()
    , solution      <- [South, East, North]
    , minMoves      <- 3
-   , jewel         <- NoQJewel
+   , jewel         <- NoJewel
    , spikesDir     <- Nothing
    , boxes         <- []
    , ball          <- QBallAt(bpos <- pos(3,4))
    , numMoves      <- 0
-   , numRightMoves <- 0
+   , numRightMoves <- just(0)
+   , numPearls     <- 4
   ))
 }
 
