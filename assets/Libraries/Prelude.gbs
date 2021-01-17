@@ -18,8 +18,8 @@ procedure Drop__Times(color, num) { repeat (num) { Drop(color) } }
 procedure Grab__Times(color, num) { repeat (num) { Grab(color) } }
 procedure Move__Times(dir, num)   { repeat (num) { Move(dir)   } }
 
-procedure GrabAll(color) { Grab__Times(color, numStones(color)) }
-procedure ClearCell() { foreach color in [minColour()..maxColour()] { GrabAll(color) } }
+procedure GrabAll_(color) { Grab__Times(color, numStones(color)) }
+procedure ClearCell() { foreach color in [minColour()..maxColour()] { GrabAll_(color) } }
 
 function isHorizontal(dir) { return (dir==East  || dir==West)  }
 function isVertical(dir)   { return (dir==North || dir==South) }
@@ -32,6 +32,8 @@ function delta(b) { return (choose 1 when (b) 0 otherwise) }
 // ---------
 // Math functions 
 // ---------
+function truncate_ToMultipleOf_(n, b) { return (b * (n div b)) }
+
 function timesOf_In_(p,n) { 
   currentN     := n
   currentTimes := 0

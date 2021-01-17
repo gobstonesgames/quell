@@ -1,6 +1,6 @@
 /* ============================================================================================================
    START Quell-Drawing.gbs
-   Operations to draw a Quell level on the board
+   Operations to draw a Quell level on the board. Awareness of Quell-Representation is needed
 // REQUIRE: Babel.gbs
 // REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
@@ -16,8 +16,7 @@ procedure DrawQLevel_(quell) {
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQJewel_(jewel(quell))
   DrawQBoxes_(boxes(quell))
-  DrawQBall_WithHint_(ball(quell), choose just(head(solution(quell))) when (isTutorial(quell))
-                                          Nothing otherwise)
+  DrawQBall_WithHintMDir_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
 }
 
 // ---------
@@ -26,11 +25,11 @@ procedure DrawQLevel_(quell) {
 // ---------
 procedure DrawTopBar_(quell) {
   GoToCorner__(North,West); MarkTopCell_(0)
-  Move(East)              ; EncodeTopNum_As_         (numMoves(quell)                       , 1)
-  Move(East)              ; EncodeTopNum_As_         (minMoves(quell)                       , 2)
-  GoToEdge(East)          ; EncodeTopMDir_As_        (spikesDir(quell)                      , 0)
-  Move(West)              ; EncodeTopNum_AndMNum_As_ (numPearls(quell), numRightMoves(quell), 4)
-  Move(West)              ; EncodeTopJewel_As_       (jewel(quell)                          , 3)  
+  Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 1)
+  Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 2)
+  GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 0)
+  Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
+  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 3)  
   Move(West)              ; PadEmptyCellAs_(0)
 }
 
@@ -45,17 +44,39 @@ procedure DrawQJewel_(jewel) { if (isJewel_(jewel)) { GoToCell_(jpos(jewel)); Dr
 procedure DrawQBoxes_(boxes) { 
   foreach box in boxes { 
     GoToCell_(fst(box))
-    DrawGender_With_(snd(box), attrBColor())
-    Drop__Times(attrBColor(), 10) 
+    DrawBox_(snd(box))
   }
 }
 
-procedure DrawQBall_WithHint_(ball, mdir)   { 
+procedure DrawMovingQBall_(ball) { 
+  /* PURPOSE: draw the ball in the current cell (ignoring bpos)
+     PRECOND: isMovingBall_(ball) 
+  */
+  DrawDir_With_(goingTo(ball), ballColor())
+  if (beaming(ball)) { Drop__Times(ballColor(), 10) }
+}
+
+procedure DrawStaticQBall_(ball) { 
+  /* PURPOSE: draw the ball in the current cell (ignoring bpos)
+     PRECOND: isStaticBall_(ball) 
+  */
+  Drop__Times(ballColor(), 5)
+}
+
+procedure DrawQBall_(ball)   { 
+  /* PURPOSE: draw the ball in the current cell (ignoring bpos) */
   switch (ball) to {
-    QBallAt(pos)               -> { GoToCell_(pos); DrawMDir_With_(mdir, ballColor())
-                                    Drop__Times(ballColor(), 5)                       }
-    QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawDir_With_(dir, ballColor())
-                                    if (beaming) { Drop__Times(ballColor(), 10) }     }
+    QBallAt(pos)               -> { DrawStaticQBall_(ball) }
+    QBallTo(pos, dir, beaming) -> { DrawMovingQBall_(ball) }
+    NoBall                     -> { }
+  }
+}  
+
+procedure DrawQBall_WithHintMDir_(ball, mdir)   { 
+  switch (ball) to {
+    QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall_(ball)
+                                    DrawMDir_With_(mdir, ballColor())      }
+    QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawMovingQBall_(ball) }
     NoBall                     -> { }
   }
 }
@@ -71,8 +92,7 @@ function  isCellAtTopRow()   { return(numStones(qelemColor()) >= 100)           
 
 procedure EncodeTopJewel_As_(jewel, i) {
   MarkTopCell_(i)
-  DrawBool_With_(isJewel_(jewel), attrAColor())
-  DrawBool_With_(False          , attrBColor()) // At the beginning the Jewel is not found
+  DrawBool_With_(False, attrBColor()) // At the beginning the Jewel is not found
 }
 
 procedure EncodeTopBool_As_(b , i) { MarkTopCell_(i); DrawBool_With_(b , attrBColor()) }
@@ -112,6 +132,36 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
     _                  -> { }
     }
 }
+
+procedure DrawBox_(gender) {
+  code := codeOfGender_(gender)
+  DrawNum_With_(10*gender, attrBColor())
+}
+
+procedure DrawBeamingBox_(gender) {
+  code := codeOfGender_(gender)
+  DrawNum_With_(10*gender+10, attrBColor()) // Beaming is indicated with 10 more stones
+}
+
+// ---------
+// Clearing operations
+// ---------
+procedure ClearBox() {
+  /* PRECOND: there is a Box represented in the current cell */
+  boxCode := truncate_ToMultipleOf_(currentNumWith_(attrBColor()), 10)
+  Grab__Times(attrBColor(), boxCode)
+}
+
+procedure ClearAttrA()        { GrabAll_(attrAColor()) }
+  
+procedure ClearBall()         { GrabAll_(ballColor())  }
+procedure ClearPearl()        { GrabAll_(attrBColor()) }
+procedure ClearJewel()        { GrabAll_(attrBColor()) }
+  
+procedure ClearTopNumPearls() { GrabAll_(attrAColor()) }
+procedure ClearTopNumMoves()  { GrabAll_(attrAColor()) }
+procedure ClearTopHint()      { GrabAll_(attrBColor()) }
+procedure ClearTopSpikesDir() { GrabAll_(attrAColor()) }
 
 // ---------
 // Error messages

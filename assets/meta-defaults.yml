@@ -2,11 +2,11 @@ attire:
   active: Quell
   visible: true
   user_permissions:
-    can_toggle_visibility: false
+    can_toggle_visibility: true
 board:
   active: 1
   initial_board_source: selected
-  visible_edition: false
+  visible_edition: true
   collapse_toolbox: true
   user_permissions:
     can_view_attire_section: true

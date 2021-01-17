@@ -1,6 +1,10 @@
 /* ============================================================================================================
    START Quell-Model.gbs
-   Definition of the datatypes representing a Quell level
+   Definition of the datatypes representing a Quell level.
+   
+   It is assumed that there is a single function level() that encodes the initial state of the level.
+   All the static information is obtained from it (particularly, isTutorial, solution, and minMoves).
+
 // REQUIRE: Babel.gbs
 // REQUIRE: EnglishPrimitives.gbs
 // REQUIRE: Prelude.gbs
@@ -10,11 +14,11 @@
 type QuellLevel is record {
   /* INV.REP.:
    * board represent the Quell game-board
-     - all elements of the game-board are lists of the same length
-     - limits (Limits, Angles, and Corners) form a continuous "line"
-     - all rows or columns that have some element different from Out or a limit have at least a two paired limits (Limits or Angles pointing to each other) 
-     - all elements different from Out or limits are between paired limits
-     - no Out or limit elements are between paired limits
+     - all elements of the game-board are borders of the same length
+     - boarders (Limits and Angles) and Corners form a continuous "line"
+     - all rows or columns that have some element different from Out or a limit have at least a two paired borders (Limits or Angles pointing to each other) 
+     - all elements different from Out or boarders or Corner are between paired borders
+     - no Out or border or Corner elements are between paired borders
      - for each Portal on the board, its target is a valid pos with the only other Portal with matching id on the board
    * solution is a list of Dirs of length minMoves that solves the level
    * minMoves is the minimum number of moves required to solve the level using Quell rules (0 if not solvable)
@@ -23,7 +27,7 @@ type QuellLevel is record {
      or there is no RotableSpikes, no Switches, and spikesDir is Nothing
    * all pos values in boxes are valid positions in the board, and the QElement in that position is Empty
    * if the ball field bpos exists, then it indicates a valid position in the board, and the QElem in that position is either Empty, or an open Gate, or a Portal, or a Switch
-   * if numRightMoves is not Notingh, the number is positive and less than minMoves
+   * if rightMoves is not Nothing, the number is positive and less than minMoves
    */
    field isTutorial    // Bool
    field board         // [[QElem]] 
@@ -34,7 +38,7 @@ type QuellLevel is record {
    field boxes         // [(Pos, Gender)]
    field ball          // QBall
    field numMoves      // Number
-   field numRightMoves // Maybe(Number)
+   field rightMoves    // Maybe(Number)
    field numPearls     // Number
 }
 
@@ -72,6 +76,13 @@ type QBall is variant {
                 }
 }
 
+type QToken is variant {
+  case ABox    {}
+  case APearl  {}
+  case AJewel  {}
+  case NoToken {}
+}
+
 // ---------------------------
 //  Abbreviations
 // ---------------------------
@@ -93,42 +104,94 @@ function vR()  { return(Limit(pointsTo <- West))  }
 // ---------------------------
 //  Detection functions
 // ---------------------------
-function isEmpty_(qelem)        { return(matching (qelem) select True  on Empty        False otherwise) }
-function isPearl_(qelem)        { return(matching (qelem) select True  on Pearl        False otherwise) }
-function isWall_(qelem)         { return(matching (qelem) select True  on Wall         False otherwise) }
-function isCorner_(qelem)       { return(matching (qelem) select True  on Corner       False otherwise) }
-function isAngle_(qelem)        { return(matching (qelem) select True  on Angle        False otherwise) }
-function isLimit_(qelem)        { return(matching (qelem) select True  on Limit        False otherwise) }
-function isPortal_(qelem)       { return(matching (qelem) select True  on Portal       False otherwise) }
-function isGate_(qelem)         { return(matching (qelem) select True  on Gate         False otherwise) }
-function isSpike_(qelem)        { return(matching (qelem) select True  on Spike        False otherwise) }
-function isMultispike_(qelem)   { return(matching (qelem) select True  on Multispike   False otherwise) }
-function isRotableSpike_(qelem) { return(matching (qelem) select True  on RotableSpike False otherwise) }
-function isSwitch_(qelem)       { return(matching (qelem) select True  on Switch       False otherwise) }
-function isOut_(qelem)          { return(matching (qelem) select True  on Out          False otherwise) }
+function isEmpty_(qelem)        { return(matching (qelem)  select True  on Empty        False otherwise) }
+function isPearl_(qelem)        { return(matching (qelem)  select True  on Pearl        False otherwise) }
+function isWall_(qelem)         { return(matching (qelem)  select True  on Wall         False otherwise) }
+function isCorner_(qelem)       { return(matching (qelem)  select True  on Corner       False otherwise) }
+function isAngle_(qelem)        { return(matching (qelem)  select True  on Angle        False otherwise) }
+function isLimit_(qelem)        { return(matching (qelem)  select True  on Limit        False otherwise) }
+function isPortal_(qelem)       { return(matching (qelem)  select True  on Portal       False otherwise) }
+function isGate_(qelem)         { return(matching (qelem)  select True  on Gate         False otherwise) }
+function isSpike_(qelem)        { return(matching (qelem)  select True  on Spike        False otherwise) }
+function isMultispike_(qelem)   { return(matching (qelem)  select True  on Multispike   False otherwise) }
+function isRotableSpike_(qelem) { return(matching (qelem)  select True  on RotableSpike False otherwise) }
+function isSwitch_(qelem)       { return(matching (qelem)  select True  on Switch       False otherwise) }
+function isOut_(qelem)          { return(matching (qelem)  select True  on Out          False otherwise) }
 
-function isNoJewel_(jewel)      { return(matching (jewel) select True  on NoJewel      False otherwise) }
-function isJewel_(jewel)        { return(matching (jewel) select True  on QJewel       False otherwise) }
+function isOpen_(qelem)         { return(matching (qelem)  select True              on Empty
+                                                                  True              on Portal
+                                                                  True              on Switch
+                                                                  not closed(qelem) on Gate
+                                                                  False otherwise)                       } 
 
-function isNoBall_(qball)       { return(matching (qball) select True  on NoBall       False otherwise) }
-function isBall_(qball)         { return(matching (qball) select False on NoBall       True  otherwise) }
-function isStaticBall_(qball)   { return(matching (qball) select True  on QBallAt      False otherwise) }
-function isMovingBall_(qball)   { return(matching (qball) select True  on QBallTo      False otherwise) }
+// --------------------------- 
+function isNoJewel_(jewel)      { return(matching (jewel)  select True  on NoJewel           False otherwise) }
+function isJewel_(jewel)        { return(matching (jewel)  select True  on QJewel            False otherwise) }
+      
+// ---------------------------      
+function isNoBall_(qball)       { return(matching (qball)  select True  on NoBall            False otherwise) }
+function isBall_(qball)         { return(matching (qball)  select False on NoBall            True  otherwise) }
+function isStaticBall_(qball)   { return(matching (qball)  select True  on QBallAt           False otherwise) }
+function isMovingBall_(qball)   { return(matching (qball)  select True  on QBallTo           False otherwise) }
+function isBeamingBall_(qball)  { return(matching (qball)  select beaming(qball) on QBallTo  False otherwise)}
 
 // ---------------------------
-//  Jewel information
+function isNoToken_(qtoken)     { return(matching (qtoken) select True  on NoToken           True  otherwise) }
+function isABox_(qtoken)        { return(matching (qtoken) select True  on ABox              False otherwise) }
+function isAPearl_(qtoken)      { return(matching (qtoken) select True  on APearl            False otherwise) }
+function isAJewel_(qtoken)      { return(matching (qtoken) select True  on AJewel            False otherwise) }
+
+// ---------------------------
+//  Ball modification
+// ---------------------------
+function movedBall_To_(qball,dir) { return(QBallTo(bpos    <- bpos(qball)
+                                                  ,goingTo <- dir
+                                                  ,beaming <- False))                            } /* PRECOND: isBall_(qball)       */
+function stoppedBall_(qball)      { return(QBallAt(bpos <- bpos(qball)))                         } /* PRECOND: isBall_(qball)       */
+function bouncedBall_(qball)      { return(QBallTo(qball | goingTo <- opposite(goingTo(qball)))) } /* PRECOND: isMovingBall_(qball) */
+function beamedBall_(qball)       { return(QBallTo(qball | beaming <- False))                    } /* PRECOND: isMovingBall_(qball) */
+function beamingBall_(qball)      { return(QBallTo(qball | beaming <- True))                     } /* PRECOND: isMovingBall_(qball) */
+
+// ---------------------------
+//  Jewel information on Quell
 // ---------------------------
 function hasJewel_(quell)      { return(not isNoJewel_(jewel(quell))) }
 function jewelPosOn_(quell)    { return(jpos(jewel(quell)))           } /* PRECOND: * hasJewel_(quell) */     
 
 // ---------------------------
-//  Ball information
+//  Ball information on Quell
 // ---------------------------
 function hasBall_(quell)       { return(not isNoBall_(ball(quell))) }
 function hasMovingBall_(quell) { return(isMovingBall_(ball(quell))) }
 function ballPosOn_(quell)     { return(bpos(ball(quell)))          } /* PRECOND: * hasBall_(quell) */     
 function ballDirOn_(quell)     { return(goingTo(ball(quel)))        } /* PRECOND: hasMovingBall_(quell) */ 
 function ballBeamingOn_(quell) { return(beaming(ball(quel)))        } /* PRECOND: hasMovingBall_(quell) */ 
+
+// ---------------------------
+//  Hint information on Quell
+// ---------------------------
+function firstTutorialDHintOn_(quell) {
+  return(choose just(head(solution(quell))) when (isTutorial(quell))
+                Nothing otherwise)
+}
+
+function dHintOn_(quell) {
+  return(choose just(elemAtIndex_In_(fromJust(rightMoves(quell))
+                                    ,solution(quell)))           when (not isNothing(rightMoves(quell)))
+                Nothing                                          otherwise)
+}
+
+function nHintOn_(quell) {
+  return(choose just(minMoves(quell)-fromJust(rightMoves(quell))) when (not isNothing(rightMoves(quell)))
+                Nothing                                           otherwise)
+}
+
+function dHintForNHint_On_(mi, quell) { 
+  return(choose just(elemAtIndex_In_(minMoves(quell)-fromJust(mi)
+                                    ,solution(quell)))            when (not isNothing(mi) && mi/=just(0))
+                Nothing                                           otherwise)
+}
+
 /* ============================================================================================================
    END Quell-Model.gbs
    ============================================================================================================
