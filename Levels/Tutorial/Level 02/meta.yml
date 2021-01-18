@@ -1,0 +1,13 @@
+name: 'Can't stop'
+
+inherit:
+  $course: gobstonesgames/quell
+  $assets:
+    extra: true
+    attires:
+      - Quell
+  execution_speed: true
+  library: true
+  board: true
+  attire: true
+  blocks: true
