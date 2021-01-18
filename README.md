@@ -1,6 +1,7 @@
 # Quell
 
 A Gobstones implementation of the Quell game, by Fallen Tree Games.
+The author is Pablo E. -Fidel- Martínez López.
 
 The first implementation follows the REPL style (Read-Eval-Print-Loop), where the board is only used to show the game, and to store its state between loops (current version of Gobstones does not support a persistant state in an interactive program).
 It can be found on the tag REPL-Version.

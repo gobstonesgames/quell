@@ -1,4 +1,4 @@
-name: 'Can't stop'
+name: Can't stop
 
 inherit:
   $course: gobstonesgames/quell
