@@ -7,6 +7,7 @@ inherit:
     attires:
       - Quell
   execution_speed: true
+  source: true
   library: true
   board: true
   attire: true

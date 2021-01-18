@@ -3,6 +3,8 @@ attire:
   visible: true
   user_permissions:
     can_toggle_visibility: true
+source:
+  visible: false  
 board:
   active: 1
   initial_board_source: selected
