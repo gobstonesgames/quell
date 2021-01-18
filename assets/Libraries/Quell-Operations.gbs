@@ -14,7 +14,7 @@
 // ---------
 // Quell top level operations
 // ---------
-procedure DrawQuell_(quell) { DrawQLevel_(quell) }       /* PRECOND: Gobstones board is big enough to represent the quell board and the top bar */
+procedure DrawQuell_(quell)      { DrawQLevel_(quell)        } /* PRECOND: Gobstones board is big enough to represent the quell board and the top bar */
 
 procedure ProcessOneStepTo_(dir) { ProcessStepTo_(just(dir)) }
 procedure ProcessOneStep()       { ProcessStepTo_(Nothing)   }

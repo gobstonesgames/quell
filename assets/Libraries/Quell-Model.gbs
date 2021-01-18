@@ -80,6 +80,7 @@ type QToken is variant {
   case ABox    {}
   case APearl  {}
   case AJewel  {}
+  case ABall   {}
   case NoToken {}
 }
 
@@ -118,16 +119,27 @@ function isRotableSpike_(qelem) { return(matching (qelem)  select True  on Rotab
 function isSwitch_(qelem)       { return(matching (qelem)  select True  on Switch       False otherwise) }
 function isOut_(qelem)          { return(matching (qelem)  select True  on Out          False otherwise) }
 
-function isOpen_(qelem)         { return(matching (qelem)  select True              on Empty
-                                                                  True              on Portal
-                                                                  True              on Switch
-                                                                  not closed(qelem) on Gate
-                                                                  False otherwise)                       } 
+function isOpen_(qelem) {
+  return(matching (qelem)  select True              on Empty
+                                  True              on Portal
+                                  True              on Switch
+                                  not closed(qelem) on Gate
+                                  False             otherwise)
+} 
+
+function isSpiky_ComingFrom_WithRotablesTo_(qelem, dir, rmdir) {
+  return (matching (qelem) select True on Multispike
+                                  dir==opposite(pointsTo(qelem)) on Spike
+                                  dir==opposite(fromJust(rmdir)) on RotableSpike
+                                  False                          otherwise)
+}
 
 // --------------------------- 
-function isNoJewel_(jewel)      { return(matching (jewel)  select True  on NoJewel           False otherwise) }
-function isJewel_(jewel)        { return(matching (jewel)  select True  on QJewel            False otherwise) }
-      
+function isNoJewel_(jewel)      { return(matching (jewel)  select True             on NoJewel False otherwise) }
+function isJewel_(jewel)        { return(matching (jewel)  select True             on QJewel  False otherwise) }
+
+function isFound_(jewel)        { return(matching (jewel)  select (hits(jewel)==0) on QJewel  False otherwise) }
+
 // ---------------------------      
 function isNoBall_(qball)       { return(matching (qball)  select True  on NoBall            False otherwise) }
 function isBall_(qball)         { return(matching (qball)  select False on NoBall            True  otherwise) }
@@ -136,7 +148,8 @@ function isMovingBall_(qball)   { return(matching (qball)  select True  on QBall
 function isBeamingBall_(qball)  { return(matching (qball)  select beaming(qball) on QBallTo  False otherwise)}
 
 // ---------------------------
-function isNoToken_(qtoken)     { return(matching (qtoken) select True  on NoToken           True  otherwise) }
+function isNoToken_(qtoken)     { return(matching (qtoken) select True  on NoToken           False  otherwise) }
+function isToken_(qtoken)       { return(matching (qtoken) select False on NoToken           True  otherwise) }
 function isABox_(qtoken)        { return(matching (qtoken) select True  on ABox              False otherwise) }
 function isAPearl_(qtoken)      { return(matching (qtoken) select True  on APearl            False otherwise) }
 function isAJewel_(qtoken)      { return(matching (qtoken) select True  on AJewel            False otherwise) }

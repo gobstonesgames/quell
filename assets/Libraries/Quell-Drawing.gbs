@@ -16,7 +16,48 @@ procedure DrawQLevel_(quell) {
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQJewel_(jewel(quell))
   DrawQBoxes_(boxes(quell))
-  DrawQBall_WithHintMDir_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
+  DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
+}
+
+procedure SetTopJewelFound() {
+  pos := currentPos()
+  GoToTopJewel()
+  DrawBool_With_(True, attrBColor())
+  GoToCell_(pos)
+}
+
+procedure IncrementTopNumMoves() {
+  pos := currentPos()
+  GoToTopNumMoves()
+  numMoves := currentNumWith_(attrAColor())
+  ClearTopNumMoves()
+  DrawNum_With_(numMoves+1, attrAColor())
+  GoToCell_(pos)
+}
+
+procedure DecrementTopNumPearls() {
+  pos := currentPos()
+  GoToTopNumPearls()
+  numPearls := currentNumWith_(attrAColor())
+  ClearTopNumPearls()
+  DrawNum_With_(numPearls-1, attrAColor())
+  GoToCell_(pos)
+}
+
+procedure SetTopHintTo_(mdir) {
+  pos := currentPos()
+  GoToTopHint()
+  ClearTopHint()
+  DrawMNum_With_(mdir, attrBColor())
+  GoToCell_(pos)
+}
+
+procedure SetTopSpikesDirTo_(dir) {
+  pos := currentPos()
+  GoToTopSpikesDir()
+  ClearTopSpikesDir()
+  DrawMDir_With_(just(dir), attrAColor())
+  GoToCell_(pos)
 }
 
 // ---------
@@ -29,7 +70,7 @@ procedure DrawTopBar_(quell) {
   Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 2)
   GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 0)
   Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
-  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 3)  
+  Move(West)              ; EncodeTopJewel_As_      (isFound_(jewel(quell))           , 3)  
   Move(West)              ; PadEmptyCellAs_(0)
 }
 
@@ -72,7 +113,7 @@ procedure DrawQBall_(ball)   {
   }
 }  
 
-procedure DrawQBall_WithHintMDir_(ball, mdir)   { 
+procedure DrawQBall_WithDHint_(ball, mdir)   { 
   switch (ball) to {
     QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall_(ball)
                                     DrawMDir_With_(mdir, ballColor())      }
@@ -90,9 +131,9 @@ procedure MarkTopCell_(i)    { Drop__Times(qelemColor(), 100+i)                 
 procedure PadEmptyCellAs_(i) { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
 function  isCellAtTopRow()   { return(numStones(qelemColor()) >= 100)                      }
 
-procedure EncodeTopJewel_As_(jewel, i) {
+procedure EncodeTopJewel_As_(jewelFound, i) {
   MarkTopCell_(i)
-  DrawBool_With_(False, attrBColor()) // At the beginning the Jewel is not found
+  DrawBool_With_(jewelFound, attrBColor()) // At the beginning the Jewel is not found
 }
 
 procedure EncodeTopBool_As_(b , i) { MarkTopCell_(i); DrawBool_With_(b , attrBColor()) }
@@ -133,6 +174,7 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
     }
 }
 
+procedure DrawJewel_(hits) { DrawNum_With_(hits-1, attrAColor()) }
 procedure DrawBox_(gender) {
   code := codeOfGender_(gender)
   DrawNum_With_(10*gender, attrBColor())
@@ -156,7 +198,7 @@ procedure ClearAttrA()        { GrabAll_(attrAColor()) }
   
 procedure ClearBall()         { GrabAll_(ballColor())  }
 procedure ClearPearl()        { GrabAll_(attrBColor()) }
-procedure ClearJewel()        { GrabAll_(attrBColor()) }
+procedure ClearJewel()        { GrabAll_(attrAColor()) }
   
 procedure ClearTopNumPearls() { GrabAll_(attrAColor()) }
 procedure ClearTopNumMoves()  { GrabAll_(attrAColor()) }

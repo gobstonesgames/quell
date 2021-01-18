@@ -48,15 +48,29 @@ function currentQToken() {
   return(choose ABox    when (hasBox())
                 APearl  when (hasPearl())
                 AJewel  when (hasJewel())
+                ABall   when (hasBall())
                 NoToken otherwise)
 }
 
-function currentBox() {
+function currentJewel() { return(currentNumWith_(attrAColor())) }
+function currentBox()   {
   /* PRECOND: there is a Box represented in the current cell 
      OBS: boxes are represented simply by their Gender
   */
   code := currentNumWith_(attrBColor()) div 100
   return (decodeGender_(code))
+}
+
+
+function currentTopDHint() { return(dHintForNHint_On_(currentTopNHint(), level())) }
+function currentTopNHint() {
+  GoToTopHint()
+  return (currentMNumWith_(attrBColor()))
+}
+
+function currentTopSpikesDir() {
+  GoToTopSpikesDir()
+  return (currentMDirWith_(attrAColor()))
 }
 
 // ---------
@@ -105,16 +119,6 @@ function hasBeamingBox() {
 function hasRotableQElem() {
   qelemId := numStones(qelemColor())
   return(qelemId==8 || qelemId==9)
-}
-
-function hintMDirForCurrentLevel() { return(dHintForNHint_On_(currentNHint(), level())) }
-function currentNHint() {
-  /* OBS: the if-then-else is used to avoid moving when is not a tutorial, for efficiency */
-  if (isTutorial(level())) { GoToTopHint()
-                             currentNHint := currentMNumWith_(attrBColor())
-                           }
-  else                     { currentNHint := Nothing }
-  return (currentNHint)
 }
 
 // ---------
