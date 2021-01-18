@@ -102,6 +102,8 @@ function hB()  { return(Limit(pointsTo <- North)) }
 function vL()  { return(Limit(pointsTo <- East))  }
 function vR()  { return(Limit(pointsTo <- West))  }
 
+function oG()  { return(Gate(closed <- False))    }
+
 // ---------------------------
 //  Detection functions
 // ---------------------------
@@ -123,6 +125,7 @@ function isOpen_(qelem) {
   return(matching (qelem)  select True              on Empty
                                   True              on Portal
                                   True              on Switch
+                                  True              on Limit
                                   not closed(qelem) on Gate
                                   False             otherwise)
 } 

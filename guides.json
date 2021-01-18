@@ -3,6 +3,8 @@
     "exercises": [
       { "id": "1", "name": "Level 01", "path": "Levels/Tutorial/Level 01" }
     , { "id": "2", "name": "Level 02", "path": "Levels/Tutorial/Level 02" }
+    , { "id": "3", "name": "Level 03", "path": "Levels/Tutorial/Level 03" }
+    , { "id": "4", "name": "Level 04", "path": "Levels/Tutorial/Level 04" }
     ] 
   }
 ]

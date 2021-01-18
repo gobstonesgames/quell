@@ -162,7 +162,7 @@ procedure ConsiderStoppingBall_MovingTo_Leaving_Entering_With_At_(ball, dir, cur
 procedure GoToNextValidPosTo_From_(dir,qelem) {
   if (isPortal_(qelem) && currentPortalIsBeaming()) 
        { GoToCell_(target(qelem))    } 
-  else { Move(dir); CheckForBorder() }
+  else { Move(dir); CheckForBorderMovingTo_(dir) }
 }
 
 procedure ConsiderTriggersLeaving_(qelem) { 
@@ -247,7 +247,7 @@ procedure AdjustTopHintTo_(dir) {
 // ---------
 // Next QElement logic
 // ---------
-procedure CheckForBorder() {
+procedure CheckForBorderMovingTo_(dir) {
   if (hasBorder()) {
     GoToMatchingBorderTo_(opposite(dir)) // Precondition guaranteed by global precondition and invariant representation of QLevel
     Move(dir) // current qelem cannot be a boarder or Corner, or board is not valid, guaranteed by global precondition and invariant representation of QLevel
@@ -257,8 +257,8 @@ procedure CheckForBorder() {
 // ---------
 // Quell element operations, on board
 // ---------
-procedure GoToMatchingBorderTo_(dir) { while (not hasBorder()) { Move(dir) } } /* PRECOND: there exists a matching border in the given direction */
-procedure CloseGate()                { DrawBool_With_(True, attrBColor())     } /* PRECOND: there is an open Gate at the current cell */
+procedure GoToMatchingBorderTo_(dir) { Move(dir); while (not hasBorder()) { Move(dir) } } /* PRECOND: there exists a matching border in the given direction */
+procedure CloseGate()                { DrawBool_With_(True, attrBColor())               } /* PRECOND: there is an open Gate at the current cell */
 
 function  currentPortalIsBeaming()   { return(hasPortal() && (hasBeamingBall() || hasBeamingBox())) }
 
