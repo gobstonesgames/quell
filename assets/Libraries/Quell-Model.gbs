@@ -112,7 +112,7 @@ function sN()     { return(Spike(pointsTo <- North))             }
 function sE()     { return(Spike(pointsTo <- East ))             }
 function sS()     { return(Spike(pointsTo <- South))             }
 function sW()     { return(Spike(pointsTo <- West ))             }
-function rots()   { return(RotableSpike)                         }
+function rS()     { return(RotableSpike)                         }
 
 // ---------------------------
 //  Detection functions

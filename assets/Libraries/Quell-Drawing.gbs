@@ -177,12 +177,12 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
 procedure DrawJewel_(hits) { DrawNum_With_(hits-1, attrAColor()) }
 procedure DrawBox_(gender) {
   code := codeOfGender_(gender)
-  DrawNum_With_(10*gender, attrBColor())
+  DrawNum_With_(100*code, attrBColor())
 }
 
 procedure DrawBeamingBox_(gender) {
   code := codeOfGender_(gender)
-  DrawNum_With_(10*gender+10, attrBColor()) // Beaming is indicated with 10 more stones
+  DrawNum_With_(100*code+10, attrBColor()) // Beaming is indicated with 10 more stones
 }
 
 // ---------

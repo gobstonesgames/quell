@@ -287,8 +287,8 @@ function codeOfPos_(vec) {
 // Genders 
 // ---------
 type Gender is variant {
-   case Masculine {}
    case Femenine {}
+   case Masculine {}
    // case Both {}
    // case None {}
 }
@@ -298,15 +298,15 @@ function  currentGenderWith_(color)       { return(decodeGender_(numStones(color
 
 function codeOfGender_(gender) {
   return (matching (gender) select
-            1 on Masculine
-            2 on Femenine
+            1 on Femenine
+            2 on Masculine
             boom(msgNotExpected("Gender")) otherwise)
 }
 
 function decodeGender_(code) { /* PRECOND: code is the coding of a Gender (between 1 and 2) */
   return(matching (code) select
-           Masculine  on 1
-           Femenine   on 2
+           Femenine   on 1
+           Masculine  on 2
            boom(msgNotACodeFor_("Gender")) otherwise)
 }
 

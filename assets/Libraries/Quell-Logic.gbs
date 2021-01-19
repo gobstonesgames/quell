@@ -54,6 +54,7 @@ procedure ProcessMoveOf_To_(theBall,mdir) {
   // Box treatment: it is done before ball movement, because it can block it
   if (isABox_(qtoken)) {
     TryToMoveBoxAt_To_(nextPos, dirOfMove) 
+    nextQE := currentQElem()  // If it is a Gate, it may have changed
     qtoken := currentQToken() // QToken may have changed, as a result from moving the box (when successful)
     GoToCell_(bpos(ball)) 
   }
@@ -64,12 +65,19 @@ procedure ProcessMoveOf_To_(theBall,mdir) {
          MoveBall_To_Leaving_AndEntering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos)
          ballChanged := True
        } 
-  elseif (moveStarts) 
-       { ballChanged := False }        // Movement try to start, but there was no room to do it
-  else {
-         ConsiderStoppingBall_MovingTo_Leaving_Entering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos) 
+         // The ball cannot move into the next element. 
+         // Three possibilities: stopping/bouncing, popping, or nothing
+  elseif (not moveStarts)        // The ball was moving, so it has to consider stopping or bouncing
+       { 
+         ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos) 
          ballChanged := True
        }
+  elseif (isSpiky_ComingFrom_WithRotablesTo_(nextQE, dirOfMove, currentTopSpikesDir())) 
+       {                         // The ball cannot move against a spike, even when starting to move
+         ClearBall()
+         ballChanged := True  
+       }
+  else { ballChanged := False } // Movement try to start, but there was no room to do it
 
   // Adjust TopBar
   if (moveStarts && ballChanged) { IncrementTopNumMoves(); AdjustTopHintTo_(dirOfMove) }
@@ -94,20 +102,31 @@ function elemsAtNextValidPosTo_From_(dir, qelem) {
 procedure TryToMoveBoxAt_To_(pos, dir) {
   /* PRECOND: there is a box in the current cell */
   GoToCell_(pos)
-  let (curQE , box)             := (currentQElem(), currentBox())
+  curQE                         := currentQElem()
+  let (box, isBeamingBox)       := currentBox()
   let (nextQE, nextPos, qtoken) := elemsAtNextValidPosTo_From_(dir, curQE)
-  if (isOpen_(nextQE) && not isToken_(qtoken)) {
-    ClearBox()
-    ConsiderTriggersLeaving_(curQE)
-    GoToCell_(nextPos)
-    ConsiderTriggersForBoxEntering_MovingTo_(nextQE, dir)
-    if (isPortal_(nextQE)) { DrawBeamingBox_(box) }
-    else                   { DrawBox_(box)        }
-    GoToCell_(pos)
-  } elseif (isPortal_(curQE)) {  // Bouncing!
-    ClearBox()
-    DrawBeamingBox_(box)
-  }
+  if (isOpen_(nextQE) && not isToken_(qtoken)) 
+    {
+      ClearBox()
+      ConsiderTriggersLeaving_MovingTo_(curQE, dir)
+      GoToCell_(nextPos)
+      ConsiderTriggersForBoxEntering_MovingTo_(nextQE, dir)
+      if (isPortal_(nextQE) && not isBeamingBox) { DrawBeamingBox_(box) }
+      else                                       { DrawBox_(box)        }
+      GoToCell_(pos)
+    } 
+  elseif (isABox_(qtoken)) 
+    {
+      ClearBox()
+      GoToCell_(nextPos)
+      ClearBox()
+      GoToCell_(pos)
+    }
+  elseif (isPortal_(curQE)) // Bouncing!
+    {
+      ClearBox()
+      DrawBeamingBox_(box)
+    }
 }
 
 procedure ConsiderPreviouslyBoncedBox() { 
@@ -128,7 +147,7 @@ procedure MoveBall_To_Leaving_AndEntering_With_At_(theBall, dir, curQE, nextQE, 
        }
   else {
         if (isPortal_(curQE))  { ConsiderPreviouslyBoncedBox() } // Bounced balls goes in the other direction...
-        ConsiderTriggersLeaving_(curQE)
+        ConsiderTriggersLeaving_MovingTo_(curQE, dir)
         GoToCell_(nextPos) 
         ConsiderTriggersForBallEntering_With_MovingTo_(nextQE, qtoken, dir)
         if (isPortal_(nextQE)) { DrawMovingQBall_(beamingBall_(ball)) }
@@ -136,7 +155,7 @@ procedure MoveBall_To_Leaving_AndEntering_With_At_(theBall, dir, curQE, nextQE, 
       }
 }
 
-procedure ConsiderStoppingBall_MovingTo_Leaving_Entering_With_At_(ball, dir, curQE, nextQE, qtoken, nextPos) {
+procedure ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball, dir, curQE, nextQE, qtoken, nextPos) {
   /* PRECOND:
        * current cell contains the ball and curQE, and cell at nextPos contains nextxQE and qtoken
        * the move does not start this turn
@@ -165,11 +184,12 @@ procedure GoToNextValidPosTo_From_(dir,qelem) {
   else { Move(dir); CheckForBorderMovingTo_(dir) }
 }
 
-procedure ConsiderTriggersLeaving_(qelem) { 
+procedure ConsiderTriggersLeaving_MovingTo_(qelem, dir) { 
   /* PRECOND: current cell has qelem. 
      OBS: the parameter is for efficiency
   */
-  if (isGate_(qelem)) { CloseGate() }
+  if (isGate_(qelem))   { CloseGate()             }
+  if (isSwitch_(qelem)) { RotateAllQElemsTo_(dir) }
 } 
 
 procedure ConsiderTriggersForBallEntering_With_MovingTo_(qelem, qtoken, dir) {

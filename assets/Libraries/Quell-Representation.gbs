@@ -28,10 +28,10 @@
     + Portal      ,  4 stones  * target   , attrA stones
                                * id       , attrB stones
     + Gate        ,  5 stones  * clsed    , attrB stones
-    + Spike       ,  8 stones  * dir      , attrA stones 
-    + Multispike  ,  9 stones
-    + Switch      ,  6 stones  * spikesDir, attrA stones
-    + Rotablespike,  7 stones  * spikesDir, attrA stones
+    + Spike       ,  6 stones  * dir      , attrA stones 
+    + Multispike  ,  7 stones
+    + Rotablespike,  8 stones  * spikesDir, attrA stones
+    + Switch      ,  9 stones  * spikesDir, attrA stones
     + Wall        , 10 stones
     + Out         , 11 stones
 

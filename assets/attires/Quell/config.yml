@@ -1,6 +1,12 @@
 name: Quell
 rules: 
   - { image: Empty.png              , when: { black:   0, blue:   0, green:   0, red:   0 } }
+  - { image: BoxF.png               , when: { black:   0, blue:   0, green:   0, red: 100 } }
+  - { image: BoxM.png               , when: { black:   0, blue:   0, green:   0, red: 200 } }
+  - { image: BoxF.png               , when: { black:   5, blue:   0, green:   0, red: 100 } }
+  - { image: BoxM.png               , when: { black:   5, blue:   0, green:   0, red: 200 } }
+  - { image: BoxF.png               , when: { black:   9, blue:   0, green:   0, red: 100 } }
+  - { image: BoxM.png               , when: { black:   9, blue:   0, green:   0, red: 200 } }
   - { image: Wall.png               , when: { black:  10, blue:   0, green:   0, red:   0 } }
   - { image: Out.png                , when: { black:  11, blue:   0, green: '*', red: '*' } }
   - { image: Pearl.png              , when: { black:   0, blue:   0, green:   0, red:   1 } }
@@ -9,6 +15,23 @@ rules:
   - { image: Jewel-2Hits.png        , when: { black:  10, blue:   0, green:   2, red:   0 } }
   - { image: Jewel-Revealed.png     , when: { black:  10, blue:   0, green:   3, red:   0 } }
   - { image: Jewel-Found.png        , when: { black:  10, blue:   0, green:   3, red:   0 } }
+  - { image: Multispike.png         , when: { black:   7, blue:   0, green:   0, red:   0 } }
+  - { image: Spike-North.png        , when: { black:   6, blue:   0, green:   1, red:   0 } }
+  - { image: Spike-East.png         , when: { black:   6, blue:   0, green:   2, red:   0 } }
+  - { image: Spike-South.png        , when: { black:   6, blue:   0, green:   3, red:   0 } }
+  - { image: Spike-West.png         , when: { black:   6, blue:   0, green:   4, red:   0 } }
+  - { image: RotSpike-North.png     , when: { black:   8, blue:   0, green:   1, red:   0 } }
+  - { image: RotSpike-East.png      , when: { black:   8, blue:   0, green:   2, red:   0 } }
+  - { image: RotSpike-South.png     , when: { black:   8, blue:   0, green:   3, red:   0 } }
+  - { image: RotSpike-West.png      , when: { black:   8, blue:   0, green:   4, red:   0 } }
+  - { image: Switch-N.png           , when: { black:   9, blue:   0, green:   1, red:   0 } }
+  - { image: Switch-E.png           , when: { black:   9, blue:   0, green:   2, red:   0 } }
+  - { image: Switch-S.png           , when: { black:   9, blue:   0, green:   3, red:   0 } }
+  - { image: Switch-W.png           , when: { black:   9, blue:   0, green:   4, red:   0 } }
+  - { image: Switch-N-withBall.png  , when: { black:   9, blue: '*', green:   1, red: '*' } }
+  - { image: Switch-E-withBall.png  , when: { black:   9, blue: '*', green:   2, red: '*' } }
+  - { image: Switch-S-withBall.png  , when: { black:   9, blue: '*', green:   3, red: '*' } }
+  - { image: Switch-W-withBall.png  , when: { black:   9, blue: '*', green:   4, red: '*' } }
   - { image: GateOpen.png           , when: { black:   5, blue:   0, green:   0, red:   0 } }
   - { image: GateClosed.png         , when: { black:   5, blue:   0, green:   0, red:   1 } }
   - { image: GateOpen-withBallN.png , when: { black:   5, blue:   6, green:   0, red:   1 } }

@@ -446,8 +446,8 @@ function codeOfPos_(vec) {
 // Genders 
 // ---------
 type Gender is variant {
-   case Masculine {}
    case Femenine {}
+   case Masculine {}
    // case Both {}
    // case None {}
 }
@@ -457,15 +457,15 @@ function  currentGenderWith_(color)       { return(decodeGender_(numStones(color
 
 function codeOfGender_(gender) {
   return (matching (gender) select
-            1 on Masculine
-            2 on Femenine
+            1 on Femenine
+            2 on Masculine
             boom(msgNotExpected("Gender")) otherwise)
 }
 
 function decodeGender_(code) { /* PRECOND: code is the coding of a Gender (between 1 and 2) */
   return(matching (code) select
-           Masculine  on 1
-           Femenine   on 2
+           Femenine   on 1
+           Masculine  on 2
            boom(msgNotACodeFor_("Gender")) otherwise)
 }
 
@@ -769,12 +769,12 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
 procedure DrawJewel_(hits) { DrawNum_With_(hits-1, attrAColor()) }
 procedure DrawBox_(gender) {
   code := codeOfGender_(gender)
-  DrawNum_With_(10*gender, attrBColor())
+  DrawNum_With_(100*code, attrBColor())
 }
 
 procedure DrawBeamingBox_(gender) {
   code := codeOfGender_(gender)
-  DrawNum_With_(10*gender+10, attrBColor()) // Beaming is indicated with 10 more stones
+  DrawNum_With_(100*code+10, attrBColor()) // Beaming is indicated with 10 more stones
 }
 
 // ---------
@@ -865,6 +865,7 @@ procedure ProcessMoveOf_To_(theBall,mdir) {
   // Box treatment: it is done before ball movement, because it can block it
   if (isABox_(qtoken)) {
     TryToMoveBoxAt_To_(nextPos, dirOfMove) 
+    nextQE := currentQElem()  // If it is a Gate, it may have changed
     qtoken := currentQToken() // QToken may have changed, as a result from moving the box (when successful)
     GoToCell_(bpos(ball)) 
   }
@@ -875,12 +876,19 @@ procedure ProcessMoveOf_To_(theBall,mdir) {
          MoveBall_To_Leaving_AndEntering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos)
          ballChanged := True
        } 
-  elseif (moveStarts) 
-       { ballChanged := False }        // Movement try to start, but there was no room to do it
-  else {
-         ConsiderStoppingBall_MovingTo_Leaving_Entering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos) 
+         // The ball cannot move into the next element. 
+         // Three possibilities: stopping/bouncing, popping, or nothing
+  elseif (not moveStarts)        // The ball was moving, so it has to consider stopping or bouncing
+       { 
+         ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball, dirOfMove, curQE, nextQE, qtoken, nextPos) 
          ballChanged := True
        }
+  elseif (isSpiky_ComingFrom_WithRotablesTo_(nextQE, dirOfMove, currentTopSpikesDir())) 
+       {                         // The ball cannot move against a spike, even when starting to move
+         ClearBall()
+         ballChanged := True  
+       }
+  else { ballChanged := False } // Movement try to start, but there was no room to do it
 
   // Adjust TopBar
   if (moveStarts && ballChanged) { IncrementTopNumMoves(); AdjustTopHintTo_(dirOfMove) }
@@ -905,20 +913,31 @@ function elemsAtNextValidPosTo_From_(dir, qelem) {
 procedure TryToMoveBoxAt_To_(pos, dir) {
   /* PRECOND: there is a box in the current cell */
   GoToCell_(pos)
-  let (curQE , box)             := (currentQElem(), currentBox())
+  curQE                         := currentQElem()
+  let (box, isBeamingBox)       := currentBox()
   let (nextQE, nextPos, qtoken) := elemsAtNextValidPosTo_From_(dir, curQE)
-  if (isOpen_(nextQE) && not isToken_(qtoken)) {
-    ClearBox()
-    ConsiderTriggersLeaving_(curQE)
-    GoToCell_(nextPos)
-    ConsiderTriggersForBoxEntering_MovingTo_(nextQE, dir)
-    if (isPortal_(nextQE)) { DrawBeamingBox_(box) }
-    else                   { DrawBox_(box)        }
-    GoToCell_(pos)
-  } elseif (isPortal_(curQE)) {  // Bouncing!
-    ClearBox()
-    DrawBeamingBox_(box)
-  }
+  if (isOpen_(nextQE) && not isToken_(qtoken)) 
+    {
+      ClearBox()
+      ConsiderTriggersLeaving_MovingTo_(curQE, dir)
+      GoToCell_(nextPos)
+      ConsiderTriggersForBoxEntering_MovingTo_(nextQE, dir)
+      if (isPortal_(nextQE) && not isBeamingBox) { DrawBeamingBox_(box) }
+      else                                       { DrawBox_(box)        }
+      GoToCell_(pos)
+    } 
+  elseif (isABox_(qtoken)) 
+    {
+      ClearBox()
+      GoToCell_(nextPos)
+      ClearBox()
+      GoToCell_(pos)
+    }
+  elseif (isPortal_(curQE)) // Bouncing!
+    {
+      ClearBox()
+      DrawBeamingBox_(box)
+    }
 }
 
 procedure ConsiderPreviouslyBoncedBox() { 
@@ -939,7 +958,7 @@ procedure MoveBall_To_Leaving_AndEntering_With_At_(theBall, dir, curQE, nextQE, 
        }
   else {
         if (isPortal_(curQE))  { ConsiderPreviouslyBoncedBox() } // Bounced balls goes in the other direction...
-        ConsiderTriggersLeaving_(curQE)
+        ConsiderTriggersLeaving_MovingTo_(curQE, dir)
         GoToCell_(nextPos) 
         ConsiderTriggersForBallEntering_With_MovingTo_(nextQE, qtoken, dir)
         if (isPortal_(nextQE)) { DrawMovingQBall_(beamingBall_(ball)) }
@@ -947,7 +966,7 @@ procedure MoveBall_To_Leaving_AndEntering_With_At_(theBall, dir, curQE, nextQE, 
       }
 }
 
-procedure ConsiderStoppingBall_MovingTo_Leaving_Entering_With_At_(ball, dir, curQE, nextQE, qtoken, nextPos) {
+procedure ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball, dir, curQE, nextQE, qtoken, nextPos) {
   /* PRECOND:
        * current cell contains the ball and curQE, and cell at nextPos contains nextxQE and qtoken
        * the move does not start this turn
@@ -976,11 +995,12 @@ procedure GoToNextValidPosTo_From_(dir,qelem) {
   else { Move(dir); CheckForBorderMovingTo_(dir) }
 }
 
-procedure ConsiderTriggersLeaving_(qelem) { 
+procedure ConsiderTriggersLeaving_MovingTo_(qelem, dir) { 
   /* PRECOND: current cell has qelem. 
      OBS: the parameter is for efficiency
   */
-  if (isGate_(qelem)) { CloseGate() }
+  if (isGate_(qelem))   { CloseGate()             }
+  if (isSwitch_(qelem)) { RotateAllQElemsTo_(dir) }
 } 
 
 procedure ConsiderTriggersForBallEntering_With_MovingTo_(qelem, qtoken, dir) {
@@ -1194,7 +1214,7 @@ function sN()     { return(Spike(pointsTo <- North))             }
 function sE()     { return(Spike(pointsTo <- East ))             }
 function sS()     { return(Spike(pointsTo <- South))             }
 function sW()     { return(Spike(pointsTo <- West ))             }
-function rots()   { return(RotableSpike)                         }
+function rS()     { return(RotableSpike)                         }
 
 // ---------------------------
 //  Detection functions
@@ -1388,8 +1408,10 @@ function currentBox()   {
   /* PRECOND: there is a Box represented in the current cell 
      OBS: boxes are represented simply by their Gender
   */
-  code := currentNumWith_(attrBColor()) div 100
-  return (decodeGender_(code))
+  codedBox     := currentNumWith_(attrBColor())
+  code         := codedBox div 100
+  isBeamingBox := (codedBox mod 100) div 10 == 1
+  return (decodeGender_(code), isBeamingBox)
 }
 
 
@@ -1411,7 +1433,8 @@ function currentCorner() { return(Corner(dir      <- currentDirWith_ (attrAColor
 function currentAngle()  { return(Angle (dir      <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is an angle  represented in the current cell */
 function currentLimit()  { return(Limit (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  limit  represented in the current cell */
 function currentSpike()  { return(Spike (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  spike  represented in the current cell */
-function currentGate()   { return(Gate  (closed   <- currentBoolWith_(attrBColor()))) } /* PRECOND: * there is a  gate   represented in the current cell */
+function currentGate()   { code := currentNumWith_(attrBColor()) mod 10
+                           return(Gate  (closed   <- decodedBool_(code)))             } /* PRECOND: * there is a  gate   represented in the current cell */
 function currentPortal() { return(Portal(target   <- currentPosWith_(attrAColor())
                                        , id       <- currentNumWith_(attrBColor())))  } /* PRECOND: * there is a  portal represented in the current cell */
 
@@ -1514,10 +1537,10 @@ function msgNoQElement() {
     + Portal      ,  4 stones  * target   , attrA stones
                                * id       , attrB stones
     + Gate        ,  5 stones  * clsed    , attrB stones
-    + Spike       ,  8 stones  * dir      , attrA stones 
-    + Multispike  ,  9 stones
-    + Switch      ,  6 stones  * spikesDir, attrA stones
-    + Rotablespike,  7 stones  * spikesDir, attrA stones
+    + Spike       ,  6 stones  * dir      , attrA stones 
+    + Multispike  ,  7 stones
+    + Rotablespike,  8 stones  * spikesDir, attrA stones
+    + Switch      ,  9 stones  * spikesDir, attrA stones
     + Wall        , 10 stones
     + Out         , 11 stones
 

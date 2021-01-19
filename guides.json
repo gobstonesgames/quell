@@ -7,9 +7,4 @@
     , { "id": "4", "name": "Level 04", "path": "Levels/Tutorial/Level 04" }
     ] 
   }
-, { "name": "Test"                         , "repo": "gobstonesgames/quell",
-    "exercises": [
-      { "id": "1", "name": "Level Test", "path": "Levels/Test/Level Test" }
-    ]
-  }
 ]

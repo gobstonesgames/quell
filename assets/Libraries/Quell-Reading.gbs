@@ -57,8 +57,10 @@ function currentBox()   {
   /* PRECOND: there is a Box represented in the current cell 
      OBS: boxes are represented simply by their Gender
   */
-  code := currentNumWith_(attrBColor()) div 100
-  return (decodeGender_(code))
+  codedBox     := currentNumWith_(attrBColor())
+  code         := codedBox div 100
+  isBeamingBox := (codedBox mod 100) div 10 == 1
+  return (decodeGender_(code), isBeamingBox)
 }
 
 
@@ -80,7 +82,8 @@ function currentCorner() { return(Corner(dir      <- currentDirWith_ (attrAColor
 function currentAngle()  { return(Angle (dir      <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is an angle  represented in the current cell */
 function currentLimit()  { return(Limit (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  limit  represented in the current cell */
 function currentSpike()  { return(Spike (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  spike  represented in the current cell */
-function currentGate()   { return(Gate  (closed   <- currentBoolWith_(attrBColor()))) } /* PRECOND: * there is a  gate   represented in the current cell */
+function currentGate()   { code := currentNumWith_(attrBColor()) mod 10
+                           return(Gate  (closed   <- decodedBool_(code)))             } /* PRECOND: * there is a  gate   represented in the current cell */
 function currentPortal() { return(Portal(target   <- currentPosWith_(attrAColor())
                                        , id       <- currentNumWith_(attrBColor())))  } /* PRECOND: * there is a  portal represented in the current cell */
 
