@@ -273,8 +273,8 @@ procedure DrawPos_With_(vec, color) { Drop__Times(color, codeOfPos_(vec)) }
 
 function currentPosWith_(color) {
   code := numStones(color)
-  return (Pos(row <- code div 1000
-             ,col <- code mod 1000
+  return (Pos(row <- code div 100
+             ,col <- code mod 100
   ))
 }
 

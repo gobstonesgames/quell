@@ -1,18 +1,21 @@
 name: Quell
-rules:
+rules: 
   - { image: Empty.png              , when: { black:   0, blue:   0, green:   0, red:   0 } }
-  - { image: Ball-North.png         , when: { black: '*', blue:   6, green: '*', red: '*' } }
-  - { image: Ball-East.png          , when: { black: '*', blue:   7, green: '*', red: '*' } }
-  - { image: Ball-South.png         , when: { black: '*', blue:   8, green: '*', red: '*' } }
-  - { image: Ball-West.png          , when: { black: '*', blue:   9, green: '*', red: '*' } }
-  - { image: Ball.png               , when: { black: '*', blue: '+', green: '*', red: '*' } }
+  - { image: Wall.png               , when: { black:  10, blue:   0, green:   0, red:   0 } }
+  - { image: Out.png                , when: { black:  11, blue:   0, green: '*', red: '*' } }
   - { image: Pearl.png              , when: { black:   0, blue:   0, green:   0, red:   1 } }
   - { image: Jewel.png              , when: { black:   0, blue:   0, green:   3, red:   0 } }
-  - { image: Wall.png               , when: { black:  10, blue:   0, green:   0, red:   0 } }
   - { image: Jewel-1Hit.png         , when: { black:  10, blue:   0, green:   1, red:   0 } }
   - { image: Jewel-2Hits.png        , when: { black:  10, blue:   0, green:   2, red:   0 } }
   - { image: Jewel-Revealed.png     , when: { black:  10, blue:   0, green:   3, red:   0 } }
   - { image: Jewel-Found.png        , when: { black:  10, blue:   0, green:   3, red:   0 } }
+  - { image: GateOpen.png           , when: { black:   5, blue:   0, green:   0, red:   0 } }
+  - { image: GateClosed.png         , when: { black:   5, blue:   0, green:   0, red:   1 } }
+  - { image: GateOpen-withBallN.png , when: { black:   5, blue:   6, green:   0, red:   1 } }
+  - { image: GateOpen-withBallE.png , when: { black:   5, blue:   7, green:   0, red:   1 } }
+  - { image: GateOpen-withBallS.png , when: { black:   5, blue:   8, green:   0, red:   1 } }
+  - { image: GateOpen-withBallW.png , when: { black:   5, blue:   9, green:   0, red:   1 } }
+  - { image: GateOpen-withBall.png  , when: { black:   5, blue: '*', green:   0, red:   1 } }
   - { image: LimitH-N.png           , when: { black:   3, blue:   0, green:   1, red:   0 } }
   - { image: LimitH-S.png           , when: { black:   3, blue:   0, green:   3, red:   0 } }
   - { image: LimitV-E.png           , when: { black:   3, blue:   0, green:   2, red:   0 } }
@@ -25,14 +28,37 @@ rules:
   - { image: AngleNE.png            , when: { black:   2, blue:   0, green:   3, red:   0 } }
   - { image: AngleSW.png            , when: { black:   2, blue:   0, green:   1, red:   0 } }
   - { image: AngleSE.png            , when: { black:   2, blue:   0, green:   4, red:   0 } }
-  - { image: GateOpen.png           , when: { black:   5, blue:   0, green:   0, red:   0 } }
-  - { image: GateClosed.png         , when: { black:   5, blue:   0, green:   0, red:   1 } }
-  - { image: GateOpen-withBallN.png , when: { black:   5, blue:   6, green:   0, red:   1 } }
-  - { image: GateOpen-withBallE.png , when: { black:   5, blue:   7, green:   0, red:   1 } }
-  - { image: GateOpen-withBallS.png , when: { black:   5, blue:   8, green:   0, red:   1 } }
-  - { image: GateOpen-withBallW.png , when: { black:   5, blue:   9, green:   0, red:   1 } }
-  - { image: GateOpen-withBall.png  , when: { black:   5, blue: '*', green:   0, red:   1 } }
-  - { image: Out.png                , when: { black:  11, blue:   0, green: '*', red: '*' } }
+  - { image: PortalA.png            , when: { black:   4, blue:   0, green: '*', red:   1 } }
+  - { image: PortalA-beamedBall.png , when: { black:   4, blue:   1, green: '*', red:   1 } }
+  - { image: PortalA-beamedBall.png , when: { black:   4, blue:   2, green: '*', red:   1 } }
+  - { image: PortalA-beamedBall.png , when: { black:   4, blue:   3, green: '*', red:   1 } }
+  - { image: PortalA-beamedBall.png , when: { black:   4, blue:   4, green: '*', red:   1 } }
+  - { image: PortalA-beamingBall.png, when: { black:   4, blue:  11, green: '*', red:   1 } }
+  - { image: PortalA-beamingBall.png, when: { black:   4, blue:  12, green: '*', red:   1 } }
+  - { image: PortalA-beamingBall.png, when: { black:   4, blue:  13, green: '*', red:   1 } }
+  - { image: PortalA-beamingBall.png, when: { black:   4, blue:  14, green: '*', red:   1 } }
+  - { image: PortalA-beamedBoxF.png , when: { black:   4, blue:   0, green: '*', red: 101 } }
+  - { image: PortalA-beamedBoxM.png , when: { black:   4, blue:   0, green: '*', red: 201 } }
+  - { image: PortalA-beamingBoxF.png, when: { black:   4, blue:   0, green: '*', red: 111 } }
+  - { image: PortalA-beamingBoxM.png, when: { black:   4, blue:   0, green: '*', red: 211 } }
+  - { image: PortalB.png            , when: { black:   4, blue:   0, green: '*', red:   2 } }
+  - { image: PortalB-beamedBall.png , when: { black:   4, blue:   1, green: '*', red:   2 } }
+  - { image: PortalB-beamedBall.png , when: { black:   4, blue:   2, green: '*', red:   2 } }
+  - { image: PortalB-beamedBall.png , when: { black:   4, blue:   3, green: '*', red:   2 } }
+  - { image: PortalB-beamedBall.png , when: { black:   4, blue:   4, green: '*', red:   2 } }
+  - { image: PortalB-beamingBall.png, when: { black:   4, blue:  11, green: '*', red:   2 } }
+  - { image: PortalB-beamingBall.png, when: { black:   4, blue:  12, green: '*', red:   2 } }
+  - { image: PortalB-beamingBall.png, when: { black:   4, blue:  13, green: '*', red:   2 } }
+  - { image: PortalB-beamingBall.png, when: { black:   4, blue:  14, green: '*', red:   2 } }
+  - { image: PortalB-beamedBoxF.png , when: { black:   4, blue:   0, green: '*', red: 102 } }
+  - { image: PortalB-beamedBoxM.png , when: { black:   4, blue:   0, green: '*', red: 202 } }
+  - { image: PortalB-beamingBoxF.png, when: { black:   4, blue:   0, green: '*', red: 112 } }
+  - { image: PortalB-beamingBoxM.png, when: { black:   4, blue:   0, green: '*', red: 212 } }
+  - { image: Ball-North.png         , when: { black: '*', blue:   6, green: '*', red: '*' } }
+  - { image: Ball-East.png          , when: { black: '*', blue:   7, green: '*', red: '*' } }
+  - { image: Ball-South.png         , when: { black: '*', blue:   8, green: '*', red: '*' } }
+  - { image: Ball-West.png          , when: { black: '*', blue:   9, green: '*', red: '*' } }
+  - { image: Ball.png               , when: { black: '*', blue: '+', green: '*', red: '*' } }
   - { image: TopEmpty.png           , when: { black: 100, blue:   0, green: '*', red: '*' } }
   - { image: TopJewelUnfound.png    , when: { black: 103, blue:   0, green:   1, red:   0 } }
   - { image: TopJewelFound.png      , when: { black: 103, blue:   0, green:   1, red:   1 } }

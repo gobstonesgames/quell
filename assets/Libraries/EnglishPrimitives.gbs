@@ -14,6 +14,10 @@ type Colour is variant {
     case Black  {}
 }
 
+/*@ATTRIBUTE@block_name@_@*/
+/*@ATTRIBUTE@block_dropdown@[("Red", 'Red'), ("Green", 'Green'), ("Blue", 'Blue'), ("Black", 'Black')]@*/
+function colour_(dir) { return (dir) }
+
 function colorEn2Sp(color) {
   return(matching (color) select
            Rojo   on Red
@@ -56,6 +60,10 @@ type Direction is variant {
     case South {}
     case West  {}
 }
+
+/*@ATTRIBUTE@block_name@_@*/
+/*@ATTRIBUTE@block_dropdown@[("North", 'North'), ("East", 'East'), ("South", 'South'), ("West", 'West')]@*/
+function direction_(dir) { return (dir) }
 
 function dirEn2Sp(dir) {
   return(matching (dir) select
