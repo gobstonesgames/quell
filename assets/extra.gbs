@@ -41,6 +41,10 @@ type Colour is variant {
     case Black  {}
 }
 
+/*@ATTRIBUTE@block_name@_@*/
+/*@ATTRIBUTE@block_dropdown@[("Red", 'Red'), ("Green", 'Green'), ("Blue", 'Blue'), ("Black", 'Black')]@*/
+function colour_(dir) { return (dir) }
+
 function colorEn2Sp(color) {
   return(matching (color) select
            Rojo   on Red
@@ -83,6 +87,10 @@ type Direction is variant {
     case South {}
     case West  {}
 }
+
+/*@ATTRIBUTE@block_name@_@*/
+/*@ATTRIBUTE@block_dropdown@[("North", 'North'), ("East", 'East'), ("South", 'South'), ("West", 'West')]@*/
+function direction_(dir) { return (dir) }
 
 function dirEn2Sp(dir) {
   return(matching (dir) select
@@ -424,8 +432,8 @@ procedure DrawPos_With_(vec, color) { Drop__Times(color, codeOfPos_(vec)) }
 
 function currentPosWith_(color) {
   code := numStones(color)
-  return (Pos(row <- code div 1000
-             ,col <- code mod 1000
+  return (Pos(row <- code div 100
+             ,col <- code mod 100
   ))
 }
 
@@ -1166,17 +1174,27 @@ function cNE() { return(Corner(dir <- South))     }
 function cSE() { return(Corner(dir <- West))      }
 function cSW() { return(Corner(dir <- North))     }
    
-function aNW() { return(Angle(dir <- East))       }
-function aNE() { return(Angle(dir <- South))      }
-function aSE() { return(Angle(dir <- West))       }
-function aSW() { return(Angle(dir <- North))      }
+function aNW()    { return(Angle(dir <- East ))                  }
+function aNE()    { return(Angle(dir <- South))                  }
+function aSE()    { return(Angle(dir <- West ))                  }
+function aSW()    { return(Angle(dir <- North))                  }
+              
+function hT()     { return(Limit(pointsTo <- South))             }
+function hB()     { return(Limit(pointsTo <- North))             }
+function vL()     { return(Limit(pointsTo <- East ))             }
+function vR()     { return(Limit(pointsTo <- West ))             }
+            
+function oG()     { return(Gate(closed <- False))                }
 
-function hT()  { return(Limit(pointsTo <- South)) }
-function hB()  { return(Limit(pointsTo <- North)) }
-function vL()  { return(Limit(pointsTo <- East))  }
-function vR()  { return(Limit(pointsTo <- West))  }
+function pA_(c,r) { return(Portal(target <- pos(c,r), id <- 1))  }
+function pB_(c,r) { return(Portal(target <- pos(c,r), id <- 2))  }
 
-function oG()  { return(Gate(closed <- False))    }
+function mS()     { return(Multispike)                           }
+function sN()     { return(Spike(pointsTo <- North))             }
+function sE()     { return(Spike(pointsTo <- East ))             }
+function sS()     { return(Spike(pointsTo <- South))             }
+function sW()     { return(Spike(pointsTo <- West ))             }
+function rots()   { return(RotableSpike)                         }
 
 // ---------------------------
 //  Detection functions
