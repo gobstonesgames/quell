@@ -15,10 +15,4 @@
     , { "id": "4", "name": "Level 4", "path": "Levels/Level 04" }
   ] 
   }
-, { "name": "Tools"                        , "repo": "gobstonesgames/quell",
-    "exercises": [
-      { "id": "1", "name": "Level Editor", "path": "Levels/Tools/Level Editor" }
-    , { "id": "2", "name": "Level Test"  , "path": "Levels/Tools/Level Test"   }
-    ]
-  }
 ]
