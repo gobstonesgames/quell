@@ -95,7 +95,7 @@ procedure ProcessMoveOf_To_(theBall,mdir) {
   else { ballChanged := False } // Movement try to start, but there was no room to do it
 
   // Adjust TopBar
-  if (moveStarts && ballChanged) { IncrementTopNumMoves(); AdjustTopHintTo_(dirOfMove) }
+  if (moveStarts && ballChanged && currentTopNumPearls()>0) { IncrementTopNumMoves(); AdjustTopHintTo_(dirOfMove) }
 }
 
 // ---------
@@ -242,7 +242,7 @@ procedure HitJewelAt_AndReturnTo_(pos, inipos) {
 
 procedure HitJewel() { 
   /* PRECOND: current cell must contain the Jewel */
-  hits := currentJewel() 
+  hits := currentJewel()
   ClearJewel()
   if (hits > 1)      { DrawJewel_(hits-1) }
   elseif (hits == 1) { SetTopJewelFound() }

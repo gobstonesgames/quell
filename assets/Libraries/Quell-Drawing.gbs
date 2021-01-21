@@ -77,7 +77,7 @@ procedure DrawTopBar_(quell) {
   Move(East)
   GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 5)
   Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
-  Move(West)              ; EncodeTopJewel_As_      (isFound_(jewel(quell))           , 3)  
+  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 3)  
   Move(West)              ; PadEmptyCellAs_(0)
 }
 
@@ -88,7 +88,14 @@ procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
   foreach row in tail(board) { Move(South); DrawQRow_WithSpikesTo_(row, spikesDir) }
 }
 
-procedure DrawQJewel_(jewel) { if (isJewel_(jewel)) { GoToCell_(jpos(jewel)); DrawNum_With_(hits(jewel), attrAColor()) } }
+procedure DrawQJewel_(jewel) { 
+  if (isJewel_(jewel)) { 
+    GoToCell_(jpos(jewel))
+    if (hasWall()) { DrawBool_With_(True, attrBColor()) }
+    DrawJewel_(hits(jewel)) 
+  } 
+}
+
 procedure DrawQBoxes_(boxes) { 
   foreach box in boxes { 
     GoToCell_(fst(box))
@@ -144,9 +151,10 @@ procedure EncodeTopShowHint_As_(showHint, i) {
   DrawBool_With_(showHint, attrBColor()) // At the beginning Tutorial levels start with hints on
 }
 
-procedure EncodeTopJewel_As_(jewelFound, i) {
+procedure EncodeTopJewel_As_(jewel, i) {
   MarkTopCell_(i)
-  DrawBool_With_(jewelFound, attrBColor()) // At the beginning the Jewel is not found
+  DrawBool_With_(isJewel_(jewel), attrAColor())
+  DrawBool_With_(isFound_(jewel), attrBColor()) 
 }
 
 procedure EncodeTopBool_As_(b , i) { MarkTopCell_(i); DrawBool_With_(b , attrBColor()) }
@@ -187,7 +195,7 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
     }
 }
 
-procedure DrawJewel_(hits) { DrawNum_With_(hits-1, attrAColor()) }
+procedure DrawJewel_(hits) { DrawNum_With_(hits, attrAColor()) }
 procedure DrawBox_(gender) {
   code := codeOfGender_(gender)
   DrawNum_With_(100*code, attrBColor())

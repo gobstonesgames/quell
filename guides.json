@@ -1,10 +1,15 @@
 [ 
-  { "name": "Tutorial"                      , "repo": "gobstonesgames/quell",
+  { "name": "Tutorial"                     , "repo": "gobstonesgames/quell",
     "exercises": [
-      { "id": "1", "name": "Level 01", "path": "Levels/Tutorial/Level 01" }
-    , { "id": "2", "name": "Level 02", "path": "Levels/Tutorial/Level 02" }
-    , { "id": "3", "name": "Level 03", "path": "Levels/Tutorial/Level 03" }
-    , { "id": "4", "name": "Level 04", "path": "Levels/Tutorial/Level 04" }
+      { "id": "1", "name": "Tutorial 1", "path": "Levels/Tutorial/Level T1" }
+    , { "id": "2", "name": "Tutorial 2", "path": "Levels/Tutorial/Level T2" }
+    , { "id": "3", "name": "Tutorial 3", "path": "Levels/Tutorial/Level T3" }
+    , { "id": "4", "name": "Tutorial 4", "path": "Levels/Tutorial/Level T4" }
+    ] 
+  }
+, { "name": "Levels"                       , "repo": "gobstonesgames/quell",
+    "exercises": [
+      { "id": "1", "name": "Level 1", "path": "Levels/Level 01" }
     ] 
   }
 ]

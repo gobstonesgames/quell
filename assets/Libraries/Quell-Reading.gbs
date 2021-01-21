@@ -79,6 +79,11 @@ function currentTopSpikesDir() {
   return (currentMDirWith_(attrAColor()))
 }
 
+function currentTopNumPearls() {
+  GoToTopNumPearls()
+  return (currentNumWith_(attrAColor()))
+}
+
 // ---------
 // Reading specific QElems
 // ---------
@@ -148,6 +153,11 @@ function hasJewel() {
   /* OBS: jewels appear only on Empty or Wall */
   qelemId := numStones(qelemColor())
   return ((qelemId==0 || qelemId==10) && hasStones(attrAColor()))
+}
+
+function hasWall() {
+  qelemId := numStones(qelemColor())
+  return (qelemId==10)
 }
 
 // ---------

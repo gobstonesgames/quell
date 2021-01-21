@@ -11,11 +11,12 @@ rules:
   - { image: Wall.png               , when: { black:  10, blue:   0, green:   0, red:   0 } }
   - { image: Out.png                , when: { black:  11, blue:   0, green: '*', red: '*' } }
   - { image: Pearl.png              , when: { black:   0, blue:   0, green:   0, red:   1 } }
-  - { image: Jewel.png              , when: { black:   0, blue:   0, green:   3, red:   0 } }
-  - { image: Jewel-1Hit.png         , when: { black:  10, blue:   0, green:   1, red:   0 } }
-  - { image: Jewel-2Hits.png        , when: { black:  10, blue:   0, green:   2, red:   0 } }
-  - { image: Jewel-Revealed.png     , when: { black:  10, blue:   0, green:   3, red:   0 } }
-  - { image: Jewel-Found.png        , when: { black:  10, blue:   0, green:   3, red:   0 } }
+  - { image: Jewel.png              , when: { black:   0, blue:   0, green:   1, red:   0 } }
+  - { image: Wall.png               , when: { black:  10, blue:   0, green:   4, red:   1 } }
+  - { image: Jewel-1Hit.png         , when: { black:  10, blue:   0, green:   3, red:   1 } }
+  - { image: Jewel-2Hits.png        , when: { black:  10, blue:   0, green:   2, red:   1 } }
+  - { image: Jewel-Revealed.png     , when: { black:  10, blue:   0, green:   1, red:   1 } }
+  - { image: Jewel-Found.png        , when: { black:  10, blue:   0, green:   0, red:   1 } }
   - { image: Multispike.png         , when: { black:   7, blue:   0, green:   0, red:   0 } }
   - { image: Spike-North.png        , when: { black:   6, blue:   0, green:   1, red:   0 } }
   - { image: Spike-East.png         , when: { black:   6, blue:   0, green:   2, red:   0 } }
