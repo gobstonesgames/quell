@@ -63,6 +63,10 @@ function currentBox()   {
   return (decodeGender_(code), isBeamingBox)
 }
 
+function currentTopShowHint() {
+  GoToTopShowHint()
+  return(currentBoolWith_(attrBColor()))
+}
 
 function currentTopDHint() { return(dHintForNHint_On_(currentTopNHint(), level())) }
 function currentTopNHint() {

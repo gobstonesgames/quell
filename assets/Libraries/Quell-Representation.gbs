@@ -13,12 +13,13 @@
 // ---------
 /*
   QLevel info is represented at top row with 10x qelem stones (x the col Number) 
+    * cell  0 at column 0 encode if the level is tutorial
     * cell  1 at column 1 encode numMoves in attrA stones (100 for overload)
     * cell  2 at column 2 encode minMoves in attrA stones (up to 29 -- more are ignored)
     * cell  3 at column 2 from East encode jewelFound in attrB stones
     * cell  4 at column 1 from East encode numPearls  in attrA stones
                                        and rightMoves in attrB stones
-    * cell  0 at East edge encode spikesDir in attrA stones
+    * cell  5 at East edge encode spikesDir in attrA stones
 
   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
     + Empty       ,  no qelem stones
@@ -57,6 +58,7 @@
     + beaming while moving West    , 14 stones (10+4)
 */
 
+procedure GoToTopShowHint()  { GoToCorner__(North, West)                       }
 procedure GoToTopNumMoves()  { GoToCorner__(North, West); Move(East)           }
 procedure GoToTopJewel()     { GoToCorner__(North, East); Move__Times(West, 2) }
 procedure GoToTopNumPearls() { GoToCorner__(North, East); Move(West)           }

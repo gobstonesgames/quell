@@ -611,6 +611,12 @@ procedure DrawQLevel_(quell) {
   DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
 }
 
+procedure SetTopShowHint() {
+  /* PRECOND: TopShowHint is false */
+  GoToTopShowHint()
+  DrawBool_With_(True, attrBColor())
+}
+
 procedure SetTopJewelFound() {
   pos := currentPos()
   GoToTopJewel()
@@ -657,10 +663,11 @@ procedure SetTopSpikesDirTo_(dir) {
 // Level 1
 // ---------
 procedure DrawTopBar_(quell) {
-  GoToCorner__(North,West); MarkTopCell_(0)
+  GoToCorner__(North,West); EncodeTopShowHint_As_   (isTutorial(quell)                , 0)
   Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 1)
   Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 2)
-  GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 0)
+  Move(East)
+  GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 5)
   Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
   Move(West)              ; EncodeTopJewel_As_      (isFound_(jewel(quell))           , 3)  
   Move(West)              ; PadEmptyCellAs_(0)
@@ -689,7 +696,7 @@ procedure DrawMovingQBall_(ball) {
   if (beaming(ball)) { Drop__Times(ballColor(), 10) }
 }
 
-procedure DrawStaticQBall_(ball) { 
+procedure DrawStaticQBall() { 
   /* PURPOSE: draw the ball in the current cell (ignoring bpos)
      PRECOND: isStaticBall_(ball) 
   */
@@ -699,7 +706,7 @@ procedure DrawStaticQBall_(ball) {
 procedure DrawQBall_(ball)   { 
   /* PURPOSE: draw the ball in the current cell (ignoring bpos) */
   switch (ball) to {
-    QBallAt(pos)               -> { DrawStaticQBall_(ball) }
+    QBallAt(pos)               -> { DrawStaticQBall()      }
     QBallTo(pos, dir, beaming) -> { DrawMovingQBall_(ball) }
     NoBall                     -> { }
   }
@@ -707,7 +714,7 @@ procedure DrawQBall_(ball)   {
 
 procedure DrawQBall_WithDHint_(ball, mdir)   { 
   switch (ball) to {
-    QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall_(ball)
+    QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall()
                                     DrawMDir_With_(mdir, ballColor())      }
     QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawMovingQBall_(ball) }
     NoBall                     -> { }
@@ -722,6 +729,12 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
 procedure MarkTopCell_(i)    { Drop__Times(qelemColor(), 100+i)                            }
 procedure PadEmptyCellAs_(i) { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
 function  isCellAtTopRow()   { return(numStones(qelemColor()) >= 100)                      }
+
+procedure EncodeTopShowHint_As_(showHint, i) {
+  MarkTopCell_(i)
+  DrawBool_With_(True,     attrAColor()) // This is to show the visual aid of Hint
+  DrawBool_With_(showHint, attrBColor()) // At the beginning Tutorial levels start with hints on
+}
 
 procedure EncodeTopJewel_As_(jewelFound, i) {
   MarkTopCell_(i)
@@ -787,15 +800,17 @@ procedure ClearBox() {
 }
 
 procedure ClearAttrA()        { GrabAll_(attrAColor()) }
+procedure ClearAttrB()        { GrabAll_(attrBColor()) }
   
 procedure ClearBall()         { GrabAll_(ballColor())  }
-procedure ClearPearl()        { GrabAll_(attrBColor()) }
-procedure ClearJewel()        { GrabAll_(attrAColor()) }
-  
-procedure ClearTopNumPearls() { GrabAll_(attrAColor()) }
-procedure ClearTopNumMoves()  { GrabAll_(attrAColor()) }
-procedure ClearTopHint()      { GrabAll_(attrBColor()) }
-procedure ClearTopSpikesDir() { GrabAll_(attrAColor()) }
+procedure ClearPearl()        { ClearAttrB()           }
+procedure ClearJewel()        { ClearAttrA()           }
+
+procedure ClearTopShowHint()  { ClearAttrB()           }
+procedure ClearTopNumPearls() { ClearAttrA()           }
+procedure ClearTopNumMoves()  { ClearAttrA()           }
+procedure ClearTopHint()      { ClearAttrB()           }
+procedure ClearTopSpikesDir() { ClearAttrA()           }
 
 // ---------
 // Error messages
@@ -832,6 +847,21 @@ procedure ProcessStepTo_(mdir) {
   if (movementOccursWith_And_(ball,mdir)) {
       ProcessMoveOf_To_(ball,mdir)
       // AnalizeEnding()
+  }
+}
+
+procedure ToogleShowHint() {
+  /* PRECOND: the current cell has the ball */
+  ball := currentQBall()
+  ClearBall()
+  if (currentTopShowHint()) { 
+    GoToTopShowHint()
+    ClearTopShowHint()
+    DrawQBall_WithDHint_(ball, Nothing) 
+  } 
+  else { 
+    if (isTutorial(level())) { SetTopShowHint() }
+    DrawQBall_WithDHint_(ball, currentTopDHint()) 
   }
 }
 
@@ -980,7 +1010,8 @@ procedure ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball
            { HitJewelAt_AndReturnTo_(nextPos, bpos(ball)) } // Jewel can be hit across borders...
          // If stopping against something spiky, ball pops
          if (not isSpiky_ComingFrom_WithRotablesTo_(nextQE, dir, currentTopSpikesDir()))
-           { DrawQBall_WithDHint_(stoppedBall_(ball), currentTopDHint()) }
+           { DrawQBall_WithDHint_(stoppedBall_(ball), choose currentTopDHint() when (currentTopShowHint()) 
+                                                             Nothing           otherwise) }
                       // bpos(ball) is the current pos, because no movement occurs
        } 
 }
@@ -1414,6 +1445,10 @@ function currentBox()   {
   return (decodeGender_(code), isBeamingBox)
 }
 
+function currentTopShowHint() {
+  GoToTopShowHint()
+  return(currentBoolWith_(attrBColor()))
+}
 
 function currentTopDHint() { return(dHintForNHint_On_(currentTopNHint(), level())) }
 function currentTopNHint() {
@@ -1522,12 +1557,13 @@ function msgNoQElement() {
 // ---------
 /*
   QLevel info is represented at top row with 10x qelem stones (x the col Number) 
+    * cell  0 at column 0 encode if the level is tutorial
     * cell  1 at column 1 encode numMoves in attrA stones (100 for overload)
     * cell  2 at column 2 encode minMoves in attrA stones (up to 29 -- more are ignored)
     * cell  3 at column 2 from East encode jewelFound in attrB stones
     * cell  4 at column 1 from East encode numPearls  in attrA stones
                                        and rightMoves in attrB stones
-    * cell  0 at East edge encode spikesDir in attrA stones
+    * cell  5 at East edge encode spikesDir in attrA stones
 
   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
     + Empty       ,  no qelem stones
@@ -1566,6 +1602,7 @@ function msgNoQElement() {
     + beaming while moving West    , 14 stones (10+4)
 */
 
+procedure GoToTopShowHint()  { GoToCorner__(North, West)                       }
 procedure GoToTopNumMoves()  { GoToCorner__(North, West); Move(East)           }
 procedure GoToTopJewel()     { GoToCorner__(North, East); Move__Times(West, 2) }
 procedure GoToTopNumPearls() { GoToCorner__(North, East); Move(West)           }

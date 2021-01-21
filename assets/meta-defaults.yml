@@ -4,8 +4,8 @@ attire:
   user_permissions:
     can_toggle_visibility: true
 source:
-  visible: true  
-  percentage: 0.40
+  visible: true
+  percentage: 0.4  
 board:
   active: 1
   initial_board_source: selected

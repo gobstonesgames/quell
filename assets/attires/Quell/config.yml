@@ -1,6 +1,7 @@
 name: Quell
 rules: 
   - { image: Empty.png              , when: { black:   0, blue:   0, green:   0, red:   0 } }
+  - { image: BoxF.png               , when: { black:   0, blue:   0, green:   1, red: 100 } }
   - { image: BoxF.png               , when: { black:   0, blue:   0, green:   0, red: 100 } }
   - { image: BoxM.png               , when: { black:   0, blue:   0, green:   0, red: 200 } }
   - { image: BoxF.png               , when: { black:   5, blue:   0, green:   0, red: 100 } }
@@ -28,6 +29,22 @@ rules:
   - { image: Switch-E.png           , when: { black:   9, blue:   0, green:   2, red:   0 } }
   - { image: Switch-S.png           , when: { black:   9, blue:   0, green:   3, red:   0 } }
   - { image: Switch-W.png           , when: { black:   9, blue:   0, green:   4, red:   0 } }
+  - { image: Switch-N-withBallN.png , when: { black:   9, blue:   6, green:   1, red: '*' } }
+  - { image: Switch-E-withBallE.png , when: { black:   9, blue:   7, green:   2, red: '*' } }
+  - { image: Switch-S-withBallS.png , when: { black:   9, blue:   8, green:   3, red: '*' } }
+  - { image: Switch-W-withBallW.png , when: { black:   9, blue:   9, green:   4, red: '*' } }
+  - { image: Switch-N-withBallE.png , when: { black:   9, blue:   7, green:   1, red: '*' } }
+  - { image: Switch-E-withBallS.png , when: { black:   9, blue:   8, green:   2, red: '*' } }
+  - { image: Switch-S-withBallW.png , when: { black:   9, blue:   9, green:   3, red: '*' } }
+  - { image: Switch-W-withBallN.png , when: { black:   9, blue:   6, green:   4, red: '*' } }
+  - { image: Switch-N-withBallS.png , when: { black:   9, blue:   8, green:   1, red: '*' } }
+  - { image: Switch-E-withBallW.png , when: { black:   9, blue:   9, green:   2, red: '*' } }
+  - { image: Switch-S-withBallN.png , when: { black:   9, blue:   6, green:   3, red: '*' } }
+  - { image: Switch-W-withBallE.png , when: { black:   9, blue:   7, green:   4, red: '*' } }
+  - { image: Switch-N-withBallW.png , when: { black:   9, blue:   9, green:   1, red: '*' } }
+  - { image: Switch-E-withBallN.png , when: { black:   9, blue:   6, green:   2, red: '*' } }
+  - { image: Switch-S-withBallE.png , when: { black:   9, blue:   7, green:   3, red: '*' } }
+  - { image: Switch-W-withBallS.png , when: { black:   9, blue:   8, green:   4, red: '*' } }
   - { image: Switch-N-withBall.png  , when: { black:   9, blue: '*', green:   1, red: '*' } }
   - { image: Switch-E-withBall.png  , when: { black:   9, blue: '*', green:   2, red: '*' } }
   - { image: Switch-S-withBall.png  , when: { black:   9, blue: '*', green:   3, red: '*' } }
@@ -82,6 +99,9 @@ rules:
   - { image: Ball-South.png         , when: { black: '*', blue:   8, green: '*', red: '*' } }
   - { image: Ball-West.png          , when: { black: '*', blue:   9, green: '*', red: '*' } }
   - { image: Ball.png               , when: { black: '*', blue: '+', green: '*', red: '*' } }
+  - { image: TopHint-Off.png        , when: { black: 100, blue:   0, green:   1, red:   1 } }
+  - { image: TopHint.png            , when: { black: 100, blue:   0, green:   1, red: '*' } }
+  - { image: TopReset.png           , when: { black: 105, blue:   0, green: '*', red: '*' } }
   - { image: TopEmpty.png           , when: { black: 100, blue:   0, green: '*', red: '*' } }
   - { image: TopJewelUnfound.png    , when: { black: 103, blue:   0, green:   1, red:   0 } }
   - { image: TopJewelFound.png      , when: { black: 103, blue:   0, green:   1, red:   1 } }

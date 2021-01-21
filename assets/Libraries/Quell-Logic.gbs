@@ -24,6 +24,21 @@ procedure ProcessStepTo_(mdir) {
   }
 }
 
+procedure ToogleShowHint() {
+  /* PRECOND: the current cell has the ball */
+  ball := currentQBall()
+  ClearBall()
+  if (currentTopShowHint()) { 
+    GoToTopShowHint()
+    ClearTopShowHint()
+    DrawQBall_WithDHint_(ball, Nothing) 
+  } 
+  else { 
+    if (isTutorial(level())) { SetTopShowHint() }
+    DrawQBall_WithDHint_(ball, currentTopDHint()) 
+  }
+}
+
 // ---------
 // Quell logic operations
 // Level 1
@@ -169,7 +184,8 @@ procedure ConsiderStoppingOrBouncingBall_MovingTo_Leaving_Entering_With_At_(ball
            { HitJewelAt_AndReturnTo_(nextPos, bpos(ball)) } // Jewel can be hit across borders...
          // If stopping against something spiky, ball pops
          if (not isSpiky_ComingFrom_WithRotablesTo_(nextQE, dir, currentTopSpikesDir()))
-           { DrawQBall_WithDHint_(stoppedBall_(ball), currentTopDHint()) }
+           { DrawQBall_WithDHint_(stoppedBall_(ball), choose currentTopDHint() when (currentTopShowHint()) 
+                                                             Nothing           otherwise) }
                       // bpos(ball) is the current pos, because no movement occurs
        } 
 }

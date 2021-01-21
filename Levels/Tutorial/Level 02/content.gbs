@@ -1,6 +1,7 @@
 interactive program {
   INIT       -> { DrawQuell_(level())      }
   K_R        -> { DrawQuell_(level())      }
+  K_H        -> { ToogleShowHint()         }
   K_DOWN     -> { ProcessOneStepTo_(South) }
   K_UP       -> { ProcessOneStepTo_(North) }
   K_LEFT     -> { ProcessOneStepTo_(West)  }    
