@@ -10,6 +10,13 @@
 , { "name": "Levels"                       , "repo": "gobstonesgames/quell",
     "exercises": [
       { "id": "1", "name": "Level 1", "path": "Levels/Level 01" }
+    , { "id": "2", "name": "Level 2", "path": "Levels/Level 02" }
     ] 
+  }
+, { "name": "Tools"                        , "repo": "gobstonesgames/quell",
+    "exercises": [
+      { "id": "1", "name": "Level Editor", "path": "Levels/Tools/Level Editor" }
+    , { "id": "2", "name": "Level Test"  , "path": "Levels/Tools/Level Test"   }
+    ]
   }
 ]

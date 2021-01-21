@@ -26,15 +26,3 @@ function board01() {
    ,[ Out  , Out  , cSW(), hB() , hB() , hB() , hB() , hB() , hB() , hB() , cSE(), Out  , Out   ]
    ])
 }
-           
-
-  //   [ Out  , cNW(), hT() , hT() , hT() , hT() , hT() , hT() , hT() , hT() , cNE(), Out   ,Out]
-  //  ,[ cNW(), aSE(), Wall , Wall , Wall , Wall , Wall , Wall , Wall , Wall , aSW(), cNE() ,Out]
-  //  ,[ vL() , Wall , Wall , Pearl, Empty, Empty, Empty, Empty, Empty, Empty, Wall , aSW() ,cNE()]
-  //  ,[ vL() , Wall , Pearl, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Wall , vR()] 
-  //  ,[ cSW(), aNE(), Wall , Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Wall  ,vR()]
-  //  ,[ Out  , cSW(), aNE(), Wall , Wall , Wall , Wall , Wall , Empty, Empty, Empty, Wall  ,vR()]
-  //  ,[ Out  , Out  , cSW(), hB() , hB() , hB() , aNE(), Wall , Empty, Empty, Empty, Wall  ,vR()]
-  //  ,[ Out  , Out  , Out  , Out  , Out  , Out  , vL() , Wall , Pearl, Empty, Empty, Wall  ,vR()]
-  //  ,[ Out  , Out  , Out  , Out  , Out  , Out  , cSW(), aNE(), Wall , Wall , Wall , aNW() ,cSE()]
-  //  ,[ Out  , Out  , Out  , Out  , Out  , Out  , Out  , cSW(), hB() , hB() , hB() , cSE() ]
