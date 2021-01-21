@@ -11,7 +11,9 @@
     "exercises": [
       { "id": "1", "name": "Level 1", "path": "Levels/Level 01" }
     , { "id": "2", "name": "Level 2", "path": "Levels/Level 02" }
-    ] 
+    , { "id": "3", "name": "Level 3", "path": "Levels/Level 03" }
+    , { "id": "4", "name": "Level 4", "path": "Levels/Level 04" }
+  ] 
   }
 , { "name": "Tools"                        , "repo": "gobstonesgames/quell",
     "exercises": [
