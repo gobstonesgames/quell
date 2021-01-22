@@ -5,7 +5,7 @@ function level() {
          , solution   <- []
          , minMoves   <- 0
          , jewel      <- NoJewel
-         , spikesDir  <- Nothinh
+         , spikesDir  <- Nothing
          , boxes      <- []
          , ball       <- NoBall
          , numMoves   <- 0
