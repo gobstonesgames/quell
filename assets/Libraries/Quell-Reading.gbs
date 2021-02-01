@@ -93,34 +93,25 @@ function currentLimit()  { return(Limit (pointsTo <- currentDirWith_ (attrAColor
 function currentSpike()  { return(Spike (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  spike  represented in the current cell */
 function currentGate()   { code := currentNumWith_(attrBColor()) mod 10
                            return(Gate  (closed   <- decodedBool_(code)))             } /* PRECOND: * there is a  gate   represented in the current cell */
-function currentPortal() { return(Portal(target   <- currentPosWith_(attrAColor())
-                                       , id       <- currentNumWith_(attrBColor())))  } /* PRECOND: * there is a  portal represented in the current cell */
-
+function currentPortal() { return(Portal(target   <- currentPortalTarget()
+                                       , id       <- currentPortalID()))              } /* PRECOND: * there is a  portal represented in the current cell */
 
 // ---------
 // Detecting QElems
 // ---------
-function hasBall() {
-  ballCode := numStones(ballColor())
-  return(ballCode > 0)
-}
+function qelemID()         { return(numStones(qelemColor())) }
+function hasPortal()       { return(qelemID() == codeOfPortal())                                       }
+function hasBorder()       { return(qelemID() == codeOfAngle()        || qelemID() == codeOfLimit())   } /* OBS: a border is either an Angle or a Limit */
+function hasRotableQElem() { return(qelemID() == codeOfRotableSpike() || qelemID() == codeOfSwitch())  }
 
-function hasBeamingBall() {
+function hasBall()         { ballCode := numStones(ballColor()); return(ballCode > 0)                                                   }
+function hasBeamingBall()  {
   /* PRECOND: current cell has a Portal */
   ballCode := numStones(ballColor())
   return(ballCode > 10)
 }
 
-function hasBorder() {
-  /* OBS: a border is either an Angle or a Limit */
-  qelemId := numStones(qelemColor())
-  return(qelemId == 2 || qelemId == 3)
-}
 
-function hasPortal() {
-  qelemId := numStones(qelemColor())
-  return(qelemId == 4)
-}
 
 function hasBeamingBox() {
   /* PRECOND: current cell has a Portal */
@@ -128,10 +119,19 @@ function hasBeamingBox() {
   return(boxCode==110 || boxCode==210) 
 }
 
-function hasRotableQElem() {
-  qelemId := numStones(qelemColor())
-  return(qelemId==8 || qelemId==9)
-}
+// For edition
+function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                     } 
+function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()      
+                                               && hasTopSpikesTempPos())                          }
+function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                }
+function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded()) }
+function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4)) }
+function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                       } /* PRECOND: current cell has TopSpikesDir ID encoded */
+
+function hasPortalID()                { return(qelemID() == codeOfPortal())                       }
+function hasTarget()                  { return(numStones(attrAColor()) > 0)                       } /* PRECOND: current cell has Portal ID encoded */
+function currentPortalID()            { return(currentNumWith_(attrBColor()))                     }
+function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                     }
 
 // ---------
 // Detecting QTokens
@@ -143,22 +143,9 @@ function hasBox()   {
   return(numStones(attrBColor())>=10) 
 }
 
-function hasPearl() {
-  /* OBS: pearls appear only on Empty */
-  qelemId := numStones(qelemColor())
-  return(qelemId==0 && numStones(attrBColor())==1) 
-}
-
-function hasJewel() {
-  /* OBS: jewels appear only on Empty or Wall */
-  qelemId := numStones(qelemColor())
-  return ((qelemId==0 || qelemId==10) && hasStones(attrAColor()))
-}
-
-function hasWall() {
-  qelemId := numStones(qelemColor())
-  return (qelemId==10)
-}
+function hasPearl() { return(qelemID()==0 && numStones(attrBColor())==1)                  } /* OBS: pearls appear only on Empty */
+function hasJewel() { return ((qelemID()==0 || qelemID()==10) && hasStones(attrAColor())) } /* OBS: jewels appear only on Empty or Wall */
+function hasWall()  { return (qelemID()==10)                                              }
 
 // ---------
 // Error messages

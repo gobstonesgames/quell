@@ -23,13 +23,13 @@
 
   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
     + Empty       ,  no qelem stones
-    + Corner      ,  1 stone   * dir      , attrA stones
+    + Corner      ,  1 stone   * dir      , attrA stones (with no dir is a generic Bound -- for edition)
     + Angle       ,  2 stones  * dir      , attrA stones
     + Limit       ,  3 stones  * pointsTo , attrA stones 
     + Portal      ,  4 stones  * target   , attrA stones
                                * id       , attrB stones
     + Gate        ,  5 stones  * clsed    , attrB stones
-    + Spike       ,  6 stones  * dir      , attrA stones 
+    + Spike       ,  6 stones  * dir      , attrA stones (with no dir is requesting a dir -- for edition) 
     + Multispike  ,  7 stones
     + Rotablespike,  8 stones  * spikesDir, attrA stones
     + Switch      ,  9 stones  * spikesDir, attrA stones
@@ -40,6 +40,7 @@
     + Pearl                    *       1 attrB stones 
     + Box                      * gender, 100*attrB stones (must be equal to Pearl representation, and different from attributes at Gates, Portals or Switches)
                                          10+ for beaming boxes
+                                         In edition mode, it uses 20 qelem stones to indicated it is waiting for a gender.
     + Jewel                    * hits  , attrA stones (must be different from Pearl representation, because it may also appear on Empty)
   
   The ball is represented with ballColor() stones 
@@ -79,21 +80,37 @@ function attrBColor() { return(Red)   }
 function codeOfQelem_(qelem) {
   return (matching (qelem) select
              0 on Empty
-             0 on Pearl   // Pearls are always on Empty cells, and drawn with attribute colors
-             1 on Corner
-             2 on Angle
-             3 on Limit
-             4 on Portal
-             5 on Gate
-             6 on Spike
-             7 on Multispike
-             8 on RotableSpike
-             9 on Switch
-            10 on Wall
-            11 on Out
+             0 on Pearl        // codeOfPearl()       
+             1 on Corner       // codeOfCorner()       
+             2 on Angle        // codeOfAngle()       
+             3 on Limit        // codeOfLimit()       
+             4 on Portal       // codeOfPortal()      
+             5 on Gate         // codeOfGate()        
+             6 on Spike        // codeOfSpike()       
+             7 on Multispike   // codeOfMultispike()  
+             8 on RotableSpike // codeOfRotableSpike()
+             9 on Switch       // codeOfSwitch()      
+            10 on Wall         // codeOfWall()        
+            11 on Out          // codeOfOut()           
             boom(msgNotExpected("QElem")) otherwise
   )
 }
+
+function codeOfPearl()         { return(  0) }
+function codeOfCorner()        { return(  1) }
+function codeOfAngle()         { return(  2) }
+function codeOfLimit()         { return(  3) }
+function codeOfPortal()        { return(  4) }
+function codeOfGate()          { return(  5) }
+function codeOfSpike()         { return(  6) }
+function codeOfMultispike()    { return(  7) }
+function codeOfRotableSpike()  { return(  8) }
+function codeOfSwitch()        { return(  9) }
+function codeOfWall()          { return( 10) }
+function codeOfOut()           { return( 11) }
+
+function codeOfIncompleteBox() { return( 20) }  // For edition
+function codeOfTopSpikesDir()  { return(106) }
 /* ============================================================================================================
    END Quell-Representation.gbs
    ============================================================================================================

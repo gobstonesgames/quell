@@ -9,7 +9,8 @@
 // ---------
 // Gobstones auxiliary functions
 // ---------
-procedure GoToCorner__(dir1, dir2) { /* PRECOND: dir1 and dir2 are not equal and not opposite of each other */                                            
+procedure GoToCorner__(dir1, dir2) { 
+  /* PRECOND: dir1 and dir2 are not equal and not opposite of each other */                                            
   GoToEdge(dir1)
   GoToEdge(dir2)
 }
@@ -18,11 +19,27 @@ procedure Drop__Times(color, num) { repeat (num) { Drop(color) } }
 procedure Grab__Times(color, num) { repeat (num) { Grab(color) } }
 procedure Move__Times(dir, num)   { repeat (num) { Move(dir)   } }
 
-procedure GrabAll_(color) { Grab__Times(color, numStones(color)) }
-procedure ClearCell() { foreach color in [minColour()..maxColour()] { GrabAll_(color) } }
+function canMove__Times(dir, num) { 
+  stepsDone := 0
+  while (canMove(dir) && stepsDone < num) { Move(dir); stepsDone := stepsDone+1 }
+  return (stepsDone == num)
+}  
+
+
+procedure GrabAll_(color) { Grab__Times(color, numStones(color))                           }
+procedure ClearCell()     { foreach color in [Red, Green, Blue, Black] { GrabAll_(color) } }
+
+function isEmptyCell()  { return(numAllStones()==0) }
+function numAllStones() {
+  stonesSeen := 0
+  foreach color in [Red, Green, Blue, Black] { stonesSeen := stonesSeen + numStones(color) }
+  return(stonesSeen)
+}
 
 function isHorizontal(dir) { return (dir==East  || dir==West)  }
 function isVertical(dir)   { return (dir==North || dir==South) }
+
+function when_Also_(antecedent, consequent) { return (not antecedent || consequent) }
 
 function adjust_To_(val, max)             { return ((val+max) mod max) }
 function num_IsBetween_And_(n, low, high) { return(n>=low && n<=high)  }
@@ -189,6 +206,12 @@ type Maybe is variant {
 function isNothing(mv) { return(matching (mv) select True on Nothing False otherwise) }
 function just(elem)    { return (Just(fromJust <- elem)) }
 
+function valueOf_Or_(mv, v) {
+ return(matching (mv) select
+          fromJust(mv) on Just
+          v            otherwise)
+}
+
 function firstOf_Or_(md1, md2) {
  return(matching (md1) select
           md1 on Just
@@ -287,8 +310,8 @@ function codeOfPos_(vec) {
 // Genders 
 // ---------
 type Gender is variant {
-   case Femenine {}
-   case Masculine {}
+   case Female {}
+   case Male {}
    // case Both {}
    // case None {}
 }
@@ -298,24 +321,25 @@ function  currentGenderWith_(color)       { return(decodeGender_(numStones(color
 
 function codeOfGender_(gender) {
   return (matching (gender) select
-            1 on Femenine
-            2 on Masculine
+            1 on Female
+            2 on Male
             boom(msgNotExpected("Gender")) otherwise)
 }
 
 function decodeGender_(code) { /* PRECOND: code is the coding of a Gender (between 1 and 2) */
   return(matching (code) select
-           Femenine   on 1
-           Masculine  on 2
+           Female on 1
+           Male   on 2
            boom(msgNotACodeFor_("Gender")) otherwise)
 }
 
 // ---------
 // Board traversal operations 
 // ---------
-procedure StartBoardTraverseTo_And_(mainDir, secDir)   { GoToCorner__(opposite(mainDir), opposite(secDir))   }
-function  atEndOfBoardTraverseTo_And_(mainDir, secDir) { return(not canMove(mainDir) && not canMove(secDir)) }
-procedure GoToNextCellInBoardTraverseTo_And_(mainDir, secDir) { /* PRECOND: head is not at end of a board traverse to mainDir and secDir */
+procedure StartBoardTraversalTo_And_(mainDir, secDir)   { GoToCorner__(opposite(mainDir), opposite(secDir))   }
+function  atEndOfBoardTraversalTo_And_(mainDir, secDir) { return(not canMove(mainDir) && not canMove(secDir)) }
+procedure MoveToNextCellInBoardTraversalTo_And_(mainDir, secDir) { 
+  /* PRECOND: head is not at end of a board traversal to mainDir and secDir */
   if (canMove(mainDir)) { Move(mainDir) }
   else                  { GoToEdge(opposite(mainDir))
                           Move(secDir)

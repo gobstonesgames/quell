@@ -3,7 +3,7 @@
    Definition of the datatypes representing a Quell level.
    
    It is assumed that there is a single function level() that encodes the initial state of the level.
-   All the static information is obtained from it (particularly, isTutorial, solution, and minMoves).
+   All the static information is obtained from it (particularly, status, solution, and minMoves).
 
 // REQUIRE: Babel.gbs
 // REQUIRE: EnglishPrimitives.gbs
@@ -29,7 +29,7 @@ type QuellLevel is record {
    * if the ball field bpos exists, then it indicates a valid position in the board, and the QElem in that position is either Empty, or an open Gate, or a Portal, or a Switch
    * if rightMoves is not Nothing, the number is positive and less than minMoves
    */
-   field isTutorial    // Bool
+   field status        // QuellStatus
    field board         // [[QElem]] 
    field solution      // [Dir]
    field minMoves      // Number
@@ -40,6 +40,12 @@ type QuellLevel is record {
    field numMoves      // Number
    field rightMoves    // Maybe(Number)
    field numPearls     // Number
+}
+
+type QuellState is variant {
+  case RegularLevel      {}
+  case TutorialLevel     {}
+  case UnderConstruction {}
 }
 
 type QElem is variant {
@@ -117,6 +123,9 @@ function rS()     { return(RotableSpike)                         }
 // ---------------------------
 //  Detection functions
 // ---------------------------
+function isTutorial_(quell)          { return(status(quell) == TutorialLevel)     }
+function isUnderConstruction_(quell) { return(status(quell) == UnderConstruction) }
+
 function isEmpty_(qelem)        { return(matching (qelem)  select True  on Empty        False otherwise) }
 function isPearl_(qelem)        { return(matching (qelem)  select True  on Pearl        False otherwise) }
 function isWall_(qelem)         { return(matching (qelem)  select True  on Wall         False otherwise) }
@@ -197,7 +206,7 @@ function ballBeamingOn_(quell) { return(beaming(ball(quel)))        } /* PRECOND
 //  Hint information on Quell
 // ---------------------------
 function firstTutorialDHintOn_(quell) {
-  return(choose just(head(solution(quell))) when (isTutorial(quell))
+  return(choose just(head(solution(quell))) when (isTutorial_(quell))
                 Nothing otherwise)
 }
 

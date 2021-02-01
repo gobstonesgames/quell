@@ -34,7 +34,7 @@ procedure ToogleShowHint() {
     DrawQBall_WithDHint_(ball, Nothing) 
   } 
   else { 
-    if (isTutorial(level())) { SetTopShowHint() }
+    if (isTutorial_(level())) { SetTopShowHint() }
     DrawQBall_WithDHint_(ball, currentTopDHint()) 
   }
 }
@@ -244,8 +244,8 @@ procedure HitJewel() {
   /* PRECOND: current cell must contain the Jewel */
   hits := currentJewel()
   ClearJewel()
-  if (hits > 1)      { DrawJewel_(hits-1) }
-  elseif (hits == 1) { SetTopJewelFound() }
+  if (hits > 1)      { DrawJewelWith_Hits(hits-1) }
+  elseif (hits == 1) { SetTopJewelFound()         }
 }
 
 procedure RotateAllQElemsTo_(dir) { 
@@ -256,10 +256,11 @@ procedure RotateAllQElemsTo_(dir) {
 } 
 
 procedure AdjustAllRotableQElemsTo_(dir) {
-  StartBoardTraverseTo_And_(East, North)
-  while (not atEndOfBoardTraverseTo_And_(East, North)) {
+  /* OBS: topBar has no rotable elements, so it can be included */
+  StartBoardTraversalTo_And_(East, North)
+  while (not atEndOfBoardTraversalTo_And_(East, North)) {
     RotateCurrentQElemTo_IfNeeded(dir)
-    GoToNextCellInBoardTraverseTo_And_(East, North)
+    MoveToNextCellInBoardTraversalTo_And_(East, North)
   }
 }
 

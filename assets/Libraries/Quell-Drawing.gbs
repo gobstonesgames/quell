@@ -16,7 +16,7 @@ procedure DrawQLevel_(quell) {
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQJewel_(jewel(quell))
   DrawQBoxes_(boxes(quell))
-  DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
+  DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time, hint is accesed directly (without arithmetic operations)
 }
 
 procedure SetTopShowHint() {
@@ -61,7 +61,7 @@ procedure SetTopHintTo_(mdir) {
 procedure SetTopSpikesDirTo_(dir) {
   pos := currentPos()
   GoToTopSpikesDir()
-  ClearTopSpikesDir()
+  ClearTopSpikesDirDirection()
   DrawMDir_With_(just(dir), attrAColor())
   GoToCell_(pos)
 }
@@ -71,14 +71,18 @@ procedure SetTopSpikesDirTo_(dir) {
 // Level 1
 // ---------
 procedure DrawTopBar_(quell) {
-  GoToCorner__(North,West); EncodeTopShowHint_As_   (isTutorial(quell)                , 0)
-  Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 1)
-  Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 2)
+  GoToCorner__(North,West); EncodeTopShowHint_As_(isTutorial_(quell)                  , 1) // At the beginning, Tutorial levels start with hints on
+                            if (isUnderConstruction_(quell)) { ClearTopID() }
+  Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 2)
+  Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 3)
   Move(East)
-  GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 5)
-  Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
-  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 3)  
+  GoToEdge(East)          ; EncodeTopMDir_As_(spikesDir(quell)                        , 6) // codeOfTopSpikesDir()-100
+                            if (isUnderConstruction_(quell)) { ClearTopID() }
+  Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 5)
+  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 4)  
   Move(West)              ; PadEmptyCellAs_(0)
+  GoToEdge(West)
+  Move(South)
 }
 
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) { 
@@ -91,10 +95,19 @@ procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
 procedure DrawQJewel_(jewel) { 
   if (isJewel_(jewel)) { 
     GoToCell_(jpos(jewel))
-    if (hasWall()) { DrawBool_With_(True, attrBColor()) }
-    DrawJewel_(hits(jewel)) 
+    if (hasWall()) { DrawJewelIntoWall() } 
+    else           { DrawJewelAlone()    } 
   } 
 }
+
+procedure ClearJewelHits()         { ClearAttrA()                      } /* PRECOND: there is a Jewel coded here */
+procedure DrawJewelWith_Hits(hits) { DrawNum_With_(hits, attrAColor()) }
+procedure DrawJewelAlone()         { DrawJewelWith_Hits(1)             }
+procedure DrawJewelIntoWall()      { 
+    DrawBool_With_(True, attrBColor())
+    DrawJewelWith_Hits(4) 
+}
+
 
 procedure DrawQBoxes_(boxes) { 
   foreach box in boxes { 
@@ -132,7 +145,7 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
     QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall()
                                     DrawMDir_With_(mdir, ballColor())      }
     QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawMovingQBall_(ball) }
-    NoBall                     -> { }
+    NoBall                     -> { GoToCorner__(North, West); Move(South) }
   }
 }
 
@@ -141,15 +154,15 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
 // Level 2
 // ---------
 // Top bar operations
-procedure MarkTopCell_(i)    { Drop__Times(qelemColor(), 100+i)                            }
-procedure PadEmptyCellAs_(i) { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
-function  isCellAtTopRow()   { return(numStones(qelemColor()) >= 100)                      }
+procedure MarkTopCell_(i)     { Drop__Times(qelemColor(), 100+i)                            }
+procedure PadEmptyCellAs_(i)  { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
+function  isCellAtTopRow()    { return(numStones(qelemColor()) >= 100)                      }
 
 procedure EncodeTopShowHint_As_(showHint, i) {
   MarkTopCell_(i)
-  DrawBool_With_(True,     attrAColor()) // This is to show the visual aid of Hint
   DrawBool_With_(showHint, attrBColor()) // At the beginning Tutorial levels start with hints on
 }
+
 
 procedure EncodeTopJewel_As_(jewel, i) {
   MarkTopCell_(i)
@@ -175,36 +188,54 @@ procedure DrawQRow_WithSpikesTo_(row, spikesDir) {
   foreach qelem in tail(row) { Move(East); DrawQElem_WithSpikesTo_(qelem, spikesDir) }
 }
 
-procedure DrawQElemId_(qelem) { Drop__Times(qelemColor(), codeOfQelem_(qelem)) }
+procedure DrawQElemID_(qelemID) { Drop__Times(qelemColor(), qelemID) }
+procedure DrawQElemIDOf_(qelem) { DrawQElemID_(codeOfQelem_(qelem))  }
 procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
-  DrawQElemId_(qelem)
   switch (qelem) to {
-    Pearl              -> { DrawBool_With_(True               , attrBColor())            }
-    Corner(dir)        -> { DrawDir_With_ (dir                , attrAColor())            }
-    Angle(dir)         -> { DrawDir_With_ (dir                , attrAColor())            }
-    Limit(pointsTo)    -> { DrawDir_With_ (pointsTo           , attrAColor())            }
-    Portal(id, target) -> { DrawPos_With_ (target             , attrAColor())            
-                            DrawNum_With_ (id                 , attrBColor())            }
-    Gate(closed)       -> { DrawBool_With_(closed             , attrBColor()) }
-    Spike(dir)         -> { DrawDir_With_(dir                 , attrAColor())            }
+    Pearl              -> { DrawPearl()                     }
+    Corner(dir)        -> { DrawCornerTo_(dir)              }
+    Angle(dir)         -> { DrawAngleTo_(dir)               }
+    Limit(pointsTo)    -> { DrawLimitTo_(pointsTo)          }
+    Portal(id, target) -> { DrawPortal_Base(id)
+                            DrawPortalPos_(target)          }
+    Gate(closed)       -> { DrawGate_(closed)               }
+    Spike(dir)         -> { DrawSpikeTo_(dir)               }
     RotableSpike       -> { Assert_OrFail_(not isNothing(spikesDir), msgInvalidQuell()) // spikesDir cannot be Nothing if there are RotableSpikes
-                            DrawDir_With_(fromJust(spikesDir) , attrAColor())            } 
+                            DrawRotableSpikeTo_(spikesDir) } 
     Switch             -> { Assert_OrFail_(not isNothing(spikesDir), msgInvalidQuell()) // spikesDir cannot be Nothing if there are Switches
-                            DrawDir_With_(fromJust(spikesDir) , attrAColor())            } 
-    _                  -> { }
+                            DrawSwitchTo_(spikesDir)        } 
+    _                  -> { DrawQElemIDOf_(qelem)           }
     }
 }
 
-procedure DrawJewel_(hits) { DrawNum_With_(hits, attrAColor()) }
-procedure DrawBox_(gender) {
-  code := codeOfGender_(gender)
-  DrawNum_With_(100*code, attrBColor())
-}
+procedure DrawBound()               { DrawQElemID_(codeOfCorner())                                       }
+procedure DrawCornerTo_(dir)        { DrawQElemID_(codeOfCorner())      ; CompleteQElemWithDir_(dir)     }
+procedure DrawAngleTo_(dir)         { DrawQElemID_(codeOfAngle())       ; CompleteQElemWithDir_(dir)     }
+procedure DrawLimitTo_(dir)         { DrawQElemID_(codeOfLimit())       ; CompleteQElemWithDir_(dir)     }
 
-procedure DrawBeamingBox_(gender) {
-  code := codeOfGender_(gender)
-  DrawNum_With_(100*code+10, attrBColor()) // Beaming is indicated with 10 more stones
-}
+procedure DrawPearl()               { DrawQElemID_(codeOfPearl())       ; CompleteQElemWithBool_(True)   }
+procedure DrawGate_(closed)         { DrawQElemID_(codeOfGate())        ; CompleteQElemWithBool_(closed) }
+procedure DrawSpikeTo_(dir)         { DrawQElemID_(codeOfSpike())       ; CompleteQElemWithDir_(dir)     }
+procedure DrawMultispike()          { DrawQElemID_(codeOfMultispike())                                   }
+procedure DrawRotableSpikeTo_(mdir) { DrawQElemID_(codeOfRotableSpike()); CompleteRotableMDir_(mdir)     }
+procedure DrawSwitchTo_(mdir)       { DrawQElemID_(codeOfSwitch())      ; CompleteRotableMDir_(mdir)     }
+procedure DrawWall()                { DrawQElemID_(codeOfWall())                                         }
+procedure DrawOut()                 { DrawQElemID_(codeOfOut())                                          }
+
+procedure DrawOpenGate()          { DrawGate_(False)                                           }
+procedure DrawWallOverJewel()     { DrawWall(); ClearJewel(); DrawJewelIntoWall()              }
+procedure DrawBox_(gender)        { DrawNum_With_(100*codeOfGender_(gender), attrBColor())     }
+procedure DrawBeamingBox_(gender) { DrawNum_With_(100*codeOfGender_(gender)+10, attrBColor())  } /* Beaming is indicated with 10 addtional stones */
+
+procedure CompleteRotableMDir_(mdir)   { DrawDir_With_(valueOf_Or_(mdir, North), attrAColor()) } /* PRECOND: current cell has a Switch or RotableSpike ID encoded */
+procedure CompleteQElemWithDir_(dir)   { DrawDir_With_(dir, attrAColor())                      } /* PRECOND: current cell has a Spike, TopSpikesDir, Corner, Angle, or Limit ID encoded */
+procedure CompleteQElemWithBool_(cond) { DrawBool_With_(cond, attrBColor())                    } /* PRECOND: current cell has a Pearl or Gate ID encoded */
+
+procedure DrawTopSpikesTempPos_(pos)   { DrawPos_With_(pos, attrBColor())                      }
+
+procedure DrawPortal_Base(id)          { DrawQElemID_(codeOfPortal()) 
+                                         DrawNum_With_(id, attrBColor())                       }
+procedure DrawPortalPos_(pos)          { DrawPos_With_(pos, attrAColor())                      }
 
 // ---------
 // Clearing operations
@@ -215,18 +246,23 @@ procedure ClearBox() {
   Grab__Times(attrBColor(), boxCode)
 }
 
-procedure ClearAttrA()        { GrabAll_(attrAColor()) }
-procedure ClearAttrB()        { GrabAll_(attrBColor()) }
-  
-procedure ClearBall()         { GrabAll_(ballColor())  }
-procedure ClearPearl()        { ClearAttrB()           }
-procedure ClearJewel()        { ClearAttrA()           }
+procedure ClearAttrA()                 { GrabAll_(attrAColor()) }
+procedure ClearAttrB()                 { GrabAll_(attrBColor()) }
+procedure ClearQElemID()               { GrabAll_(qelemColor()) }
+           
+procedure ClearBall()                  { GrabAll_(ballColor())  }
+procedure ClearPearl()                 { ClearAttrB()           }
+procedure ClearJewel()                 { ClearAttrA()           }
+procedure ClearPortalTarget()          { ClearAttrA()           }
 
-procedure ClearTopShowHint()  { ClearAttrB()           }
-procedure ClearTopNumPearls() { ClearAttrA()           }
-procedure ClearTopNumMoves()  { ClearAttrA()           }
-procedure ClearTopHint()      { ClearAttrB()           }
-procedure ClearTopSpikesDir() { ClearAttrA()           }
+procedure ClearTopShowHint()           { ClearAttrB()           }
+procedure ClearTopNumPearls()          { ClearAttrA()           }
+procedure ClearTopNumMoves()           { ClearAttrA()           }
+procedure ClearTopHint()               { ClearAttrB()           }
+procedure ClearTopSpikesDirDirection() { ClearAttrA()           }
+procedure ClearTopSpikesDirTempPos()   { ClearAttrB()           }
+procedure ClearTopID()                 { ClearQElemID()
+                                         MarkTopCell_(0)        }
 
 // ---------
 // Error messages

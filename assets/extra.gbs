@@ -177,11 +177,27 @@ procedure Drop__Times(color, num) { repeat (num) { Drop(color) } }
 procedure Grab__Times(color, num) { repeat (num) { Grab(color) } }
 procedure Move__Times(dir, num)   { repeat (num) { Move(dir)   } }
 
-procedure GrabAll_(color) { Grab__Times(color, numStones(color)) }
-procedure ClearCell() { foreach color in [minColour()..maxColour()] { GrabAll_(color) } }
+function canMove__Times(dir, num) { 
+  stepsDone := 0
+  while (canMove(dir) && stepsDone < num) { Move(dir); stepsDone := stepsDone+1 }
+  return (stepsDone == num)
+}  
+
+
+procedure GrabAll_(color) { Grab__Times(color, numStones(color))                           }
+procedure ClearCell()     { foreach color in [Red, Green, Blue, Black] { GrabAll_(color) } }
+
+function isEmptyCell()  { return(numAllStones()==0) }
+function numAllStones() {
+  stonesSeen := 0
+  foreach color in [Red, Green, Blue, Black] { stonesSeen := stonesSeen + numStones(color) }
+  return(stonesSeen)
+}
 
 function isHorizontal(dir) { return (dir==East  || dir==West)  }
 function isVertical(dir)   { return (dir==North || dir==South) }
+
+function when_Also_(antecedent, consequent) { return (not antecedent || consequent) }
 
 function adjust_To_(val, max)             { return ((val+max) mod max) }
 function num_IsBetween_And_(n, low, high) { return(n>=low && n<=high)  }
@@ -348,6 +364,12 @@ type Maybe is variant {
 function isNothing(mv) { return(matching (mv) select True on Nothing False otherwise) }
 function just(elem)    { return (Just(fromJust <- elem)) }
 
+function valueOf_Or_(mv, v) {
+ return(matching (mv) select
+          fromJust(mv) on Just
+          v            otherwise)
+}
+
 function firstOf_Or_(md1, md2) {
  return(matching (md1) select
           md1 on Just
@@ -446,8 +468,8 @@ function codeOfPos_(vec) {
 // Genders 
 // ---------
 type Gender is variant {
-   case Femenine {}
-   case Masculine {}
+   case Female {}
+   case Male {}
    // case Both {}
    // case None {}
 }
@@ -457,24 +479,25 @@ function  currentGenderWith_(color)       { return(decodeGender_(numStones(color
 
 function codeOfGender_(gender) {
   return (matching (gender) select
-            1 on Femenine
-            2 on Masculine
+            1 on Female
+            2 on Male
             boom(msgNotExpected("Gender")) otherwise)
 }
 
 function decodeGender_(code) { /* PRECOND: code is the coding of a Gender (between 1 and 2) */
   return(matching (code) select
-           Femenine   on 1
-           Masculine  on 2
+           Female on 1
+           Male   on 2
            boom(msgNotACodeFor_("Gender")) otherwise)
 }
 
 // ---------
 // Board traversal operations 
 // ---------
-procedure StartBoardTraverseTo_And_(mainDir, secDir)   { GoToCorner__(opposite(mainDir), opposite(secDir))   }
-function  atEndOfBoardTraverseTo_And_(mainDir, secDir) { return(not canMove(mainDir) && not canMove(secDir)) }
-procedure GoToNextCellInBoardTraverseTo_And_(mainDir, secDir) { /* PRECOND: head is not at end of a board traverse to mainDir and secDir */
+procedure StartBoardTraversalTo_And_(mainDir, secDir)   { GoToCorner__(opposite(mainDir), opposite(secDir))   }
+function  atEndOfBoardTraversalTo_And_(mainDir, secDir) { return(not canMove(mainDir) && not canMove(secDir)) }
+procedure MoveToNextCellInBoardTraversalTo_And_(mainDir, secDir) { 
+  /* PRECOND: head is not at end of a board traversal to mainDir and secDir */
   if (canMove(mainDir)) { Move(mainDir) }
   else                  { GoToEdge(opposite(mainDir))
                           Move(secDir)
@@ -608,7 +631,7 @@ procedure DrawQLevel_(quell) {
   DrawQBoard_WithSpikesTo_(board(quell), spikesDir(quell))
   DrawQJewel_(jewel(quell))
   DrawQBoxes_(boxes(quell))
-  DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time is accesed directly, without arithmetic operations
+  DrawQBall_WithDHint_(ball(quell), firstTutorialDHintOn_(quell)) // The first time, hint is accesed directly (without arithmetic operations)
 }
 
 procedure SetTopShowHint() {
@@ -653,7 +676,7 @@ procedure SetTopHintTo_(mdir) {
 procedure SetTopSpikesDirTo_(dir) {
   pos := currentPos()
   GoToTopSpikesDir()
-  ClearTopSpikesDir()
+  ClearTopSpikesDirDirection()
   DrawMDir_With_(just(dir), attrAColor())
   GoToCell_(pos)
 }
@@ -663,14 +686,18 @@ procedure SetTopSpikesDirTo_(dir) {
 // Level 1
 // ---------
 procedure DrawTopBar_(quell) {
-  GoToCorner__(North,West); EncodeTopShowHint_As_   (isTutorial(quell)                , 0)
-  Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 1)
-  Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 2)
+  GoToCorner__(North,West); EncodeTopShowHint_As_(isTutorial_(quell)                  , 1) // At the beginning, Tutorial levels start with hints on
+                            if (isUnderConstruction_(quell)) { ClearTopID() }
+  Move(East)              ; EncodeTopNum_As_        (numMoves(quell)                  , 2)
+  Move(East)              ; EncodeTopNum_As_        (minMoves(quell)                  , 3)
   Move(East)
-  GoToEdge(East)          ; EncodeTopMDir_As_       (spikesDir(quell)                 , 5)
-  Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 4)
-  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 3)  
+  GoToEdge(East)          ; EncodeTopMDir_As_(spikesDir(quell)                        , 6) // codeOfTopSpikesDir()-100
+                            if (isUnderConstruction_(quell)) { ClearTopID() }
+  Move(West)              ; EncodeTopNum_AndMNum_As_(numPearls(quell), nHintOn_(quell), 5)
+  Move(West)              ; EncodeTopJewel_As_      (jewel(quell)                     , 4)  
   Move(West)              ; PadEmptyCellAs_(0)
+  GoToEdge(West)
+  Move(South)
 }
 
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) { 
@@ -683,10 +710,19 @@ procedure DrawQBoard_WithSpikesTo_(board, spikesDir) {
 procedure DrawQJewel_(jewel) { 
   if (isJewel_(jewel)) { 
     GoToCell_(jpos(jewel))
-    if (hasWall()) { DrawBool_With_(True, attrBColor()) }
-    DrawJewel_(hits(jewel)) 
+    if (hasWall()) { DrawJewelIntoWall() } 
+    else           { DrawJewelAlone()    } 
   } 
 }
+
+procedure ClearJewelHits()         { ClearAttrA()                      } /* PRECOND: there is a Jewel coded here */
+procedure DrawJewelWith_Hits(hits) { DrawNum_With_(hits, attrAColor()) }
+procedure DrawJewelAlone()         { DrawJewelWith_Hits(1)             }
+procedure DrawJewelIntoWall()      { 
+    DrawBool_With_(True, attrBColor())
+    DrawJewelWith_Hits(4) 
+}
+
 
 procedure DrawQBoxes_(boxes) { 
   foreach box in boxes { 
@@ -724,7 +760,7 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
     QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall()
                                     DrawMDir_With_(mdir, ballColor())      }
     QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawMovingQBall_(ball) }
-    NoBall                     -> { }
+    NoBall                     -> { GoToCorner__(North, West); Move(South) }
   }
 }
 
@@ -733,15 +769,15 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
 // Level 2
 // ---------
 // Top bar operations
-procedure MarkTopCell_(i)    { Drop__Times(qelemColor(), 100+i)                            }
-procedure PadEmptyCellAs_(i) { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
-function  isCellAtTopRow()   { return(numStones(qelemColor()) >= 100)                      }
+procedure MarkTopCell_(i)     { Drop__Times(qelemColor(), 100+i)                            }
+procedure PadEmptyCellAs_(i)  { while(not isCellAtTopRow()) { MarkTopCell_(i); Move(West) } }
+function  isCellAtTopRow()    { return(numStones(qelemColor()) >= 100)                      }
 
 procedure EncodeTopShowHint_As_(showHint, i) {
   MarkTopCell_(i)
-  DrawBool_With_(True,     attrAColor()) // This is to show the visual aid of Hint
   DrawBool_With_(showHint, attrBColor()) // At the beginning Tutorial levels start with hints on
 }
+
 
 procedure EncodeTopJewel_As_(jewel, i) {
   MarkTopCell_(i)
@@ -767,36 +803,54 @@ procedure DrawQRow_WithSpikesTo_(row, spikesDir) {
   foreach qelem in tail(row) { Move(East); DrawQElem_WithSpikesTo_(qelem, spikesDir) }
 }
 
-procedure DrawQElemId_(qelem) { Drop__Times(qelemColor(), codeOfQelem_(qelem)) }
+procedure DrawQElemID_(qelemID) { Drop__Times(qelemColor(), qelemID) }
+procedure DrawQElemIDOf_(qelem) { DrawQElemID_(codeOfQelem_(qelem))  }
 procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
-  DrawQElemId_(qelem)
   switch (qelem) to {
-    Pearl              -> { DrawBool_With_(True               , attrBColor())            }
-    Corner(dir)        -> { DrawDir_With_ (dir                , attrAColor())            }
-    Angle(dir)         -> { DrawDir_With_ (dir                , attrAColor())            }
-    Limit(pointsTo)    -> { DrawDir_With_ (pointsTo           , attrAColor())            }
-    Portal(id, target) -> { DrawPos_With_ (target             , attrAColor())            
-                            DrawNum_With_ (id                 , attrBColor())            }
-    Gate(closed)       -> { DrawBool_With_(closed             , attrBColor()) }
-    Spike(dir)         -> { DrawDir_With_(dir                 , attrAColor())            }
+    Pearl              -> { DrawPearl()                     }
+    Corner(dir)        -> { DrawCornerTo_(dir)              }
+    Angle(dir)         -> { DrawAngleTo_(dir)               }
+    Limit(pointsTo)    -> { DrawLimitTo_(pointsTo)          }
+    Portal(id, target) -> { DrawPortal_Base(id)
+                            DrawPortalPos_(target)          }
+    Gate(closed)       -> { DrawGate_(closed)               }
+    Spike(dir)         -> { DrawSpikeTo_(dir)               }
     RotableSpike       -> { Assert_OrFail_(not isNothing(spikesDir), msgInvalidQuell()) // spikesDir cannot be Nothing if there are RotableSpikes
-                            DrawDir_With_(fromJust(spikesDir) , attrAColor())            } 
+                            DrawRotableSpikeTo_(spikesDir) } 
     Switch             -> { Assert_OrFail_(not isNothing(spikesDir), msgInvalidQuell()) // spikesDir cannot be Nothing if there are Switches
-                            DrawDir_With_(fromJust(spikesDir) , attrAColor())            } 
-    _                  -> { }
+                            DrawSwitchTo_(spikesDir)        } 
+    _                  -> { DrawQElemIDOf_(qelem)           }
     }
 }
 
-procedure DrawJewel_(hits) { DrawNum_With_(hits, attrAColor()) }
-procedure DrawBox_(gender) {
-  code := codeOfGender_(gender)
-  DrawNum_With_(100*code, attrBColor())
-}
+procedure DrawBound()               { DrawQElemID_(codeOfCorner())                                       }
+procedure DrawCornerTo_(dir)        { DrawQElemID_(codeOfCorner())      ; CompleteQElemWithDir_(dir)     }
+procedure DrawAngleTo_(dir)         { DrawQElemID_(codeOfAngle())       ; CompleteQElemWithDir_(dir)     }
+procedure DrawLimitTo_(dir)         { DrawQElemID_(codeOfLimit())       ; CompleteQElemWithDir_(dir)     }
 
-procedure DrawBeamingBox_(gender) {
-  code := codeOfGender_(gender)
-  DrawNum_With_(100*code+10, attrBColor()) // Beaming is indicated with 10 more stones
-}
+procedure DrawPearl()               { DrawQElemID_(codeOfPearl())       ; CompleteQElemWithBool_(True)   }
+procedure DrawGate_(closed)         { DrawQElemID_(codeOfGate())        ; CompleteQElemWithBool_(closed) }
+procedure DrawSpikeTo_(dir)         { DrawQElemID_(codeOfSpike())       ; CompleteQElemWithDir_(dir)     }
+procedure DrawMultispike()          { DrawQElemID_(codeOfMultispike())                                   }
+procedure DrawRotableSpikeTo_(mdir) { DrawQElemID_(codeOfRotableSpike()); CompleteRotableMDir_(mdir)     }
+procedure DrawSwitchTo_(mdir)       { DrawQElemID_(codeOfSwitch())      ; CompleteRotableMDir_(mdir)     }
+procedure DrawWall()                { DrawQElemID_(codeOfWall())                                         }
+procedure DrawOut()                 { DrawQElemID_(codeOfOut())                                          }
+
+procedure DrawOpenGate()          { DrawGate_(False)                                           }
+procedure DrawWallOverJewel()     { DrawWall(); ClearJewel(); DrawJewelIntoWall()              }
+procedure DrawBox_(gender)        { DrawNum_With_(100*codeOfGender_(gender), attrBColor())     }
+procedure DrawBeamingBox_(gender) { DrawNum_With_(100*codeOfGender_(gender)+10, attrBColor())  } /* Beaming is indicated with 10 addtional stones */
+
+procedure CompleteRotableMDir_(mdir)   { DrawDir_With_(valueOf_Or_(mdir, North), attrAColor()) } /* PRECOND: current cell has a Switch or RotableSpike ID encoded */
+procedure CompleteQElemWithDir_(dir)   { DrawDir_With_(dir, attrAColor())                      } /* PRECOND: current cell has a Spike, TopSpikesDir, Corner, Angle, or Limit ID encoded */
+procedure CompleteQElemWithBool_(cond) { DrawBool_With_(cond, attrBColor())                    } /* PRECOND: current cell has a Pearl or Gate ID encoded */
+
+procedure DrawTopSpikesTempPos_(pos)   { DrawPos_With_(pos, attrBColor())                      }
+
+procedure DrawPortal_Base(id)          { DrawQElemID_(codeOfPortal()) 
+                                         DrawNum_With_(id, attrBColor())                       }
+procedure DrawPortalPos_(pos)          { DrawPos_With_(pos, attrAColor())                      }
 
 // ---------
 // Clearing operations
@@ -807,18 +861,23 @@ procedure ClearBox() {
   Grab__Times(attrBColor(), boxCode)
 }
 
-procedure ClearAttrA()        { GrabAll_(attrAColor()) }
-procedure ClearAttrB()        { GrabAll_(attrBColor()) }
-  
-procedure ClearBall()         { GrabAll_(ballColor())  }
-procedure ClearPearl()        { ClearAttrB()           }
-procedure ClearJewel()        { ClearAttrA()           }
+procedure ClearAttrA()                 { GrabAll_(attrAColor()) }
+procedure ClearAttrB()                 { GrabAll_(attrBColor()) }
+procedure ClearQElemID()               { GrabAll_(qelemColor()) }
+           
+procedure ClearBall()                  { GrabAll_(ballColor())  }
+procedure ClearPearl()                 { ClearAttrB()           }
+procedure ClearJewel()                 { ClearAttrA()           }
+procedure ClearPortalTarget()          { ClearAttrA()           }
 
-procedure ClearTopShowHint()  { ClearAttrB()           }
-procedure ClearTopNumPearls() { ClearAttrA()           }
-procedure ClearTopNumMoves()  { ClearAttrA()           }
-procedure ClearTopHint()      { ClearAttrB()           }
-procedure ClearTopSpikesDir() { ClearAttrA()           }
+procedure ClearTopShowHint()           { ClearAttrB()           }
+procedure ClearTopNumPearls()          { ClearAttrA()           }
+procedure ClearTopNumMoves()           { ClearAttrA()           }
+procedure ClearTopHint()               { ClearAttrB()           }
+procedure ClearTopSpikesDirDirection() { ClearAttrA()           }
+procedure ClearTopSpikesDirTempPos()   { ClearAttrB()           }
+procedure ClearTopID()                 { ClearQElemID()
+                                         MarkTopCell_(0)        }
 
 // ---------
 // Error messages
@@ -868,7 +927,7 @@ procedure ToogleShowHint() {
     DrawQBall_WithDHint_(ball, Nothing) 
   } 
   else { 
-    if (isTutorial(level())) { SetTopShowHint() }
+    if (isTutorial_(level())) { SetTopShowHint() }
     DrawQBall_WithDHint_(ball, currentTopDHint()) 
   }
 }
@@ -1078,8 +1137,8 @@ procedure HitJewel() {
   /* PRECOND: current cell must contain the Jewel */
   hits := currentJewel()
   ClearJewel()
-  if (hits > 1)      { DrawJewel_(hits-1) }
-  elseif (hits == 1) { SetTopJewelFound() }
+  if (hits > 1)      { DrawJewelWith_Hits(hits-1) }
+  elseif (hits == 1) { SetTopJewelFound()         }
 }
 
 procedure RotateAllQElemsTo_(dir) { 
@@ -1090,10 +1149,11 @@ procedure RotateAllQElemsTo_(dir) {
 } 
 
 procedure AdjustAllRotableQElemsTo_(dir) {
-  StartBoardTraverseTo_And_(East, North)
-  while (not atEndOfBoardTraverseTo_And_(East, North)) {
+  /* OBS: topBar has no rotable elements, so it can be included */
+  StartBoardTraversalTo_And_(East, North)
+  while (not atEndOfBoardTraversalTo_And_(East, North)) {
     RotateCurrentQElemTo_IfNeeded(dir)
-    GoToNextCellInBoardTraverseTo_And_(East, North)
+    MoveToNextCellInBoardTraversalTo_And_(East, North)
   }
 }
 
@@ -1144,7 +1204,7 @@ function  currentPortalIsBeaming()   { return(hasPortal() && (hasBeamingBall() |
    Definition of the datatypes representing a Quell level.
    
    It is assumed that there is a single function level() that encodes the initial state of the level.
-   All the static information is obtained from it (particularly, isTutorial, solution, and minMoves).
+   All the static information is obtained from it (particularly, status, solution, and minMoves).
 
 // REQUIRE: Babel.gbs
 // REQUIRE: EnglishPrimitives.gbs
@@ -1170,7 +1230,7 @@ type QuellLevel is record {
    * if the ball field bpos exists, then it indicates a valid position in the board, and the QElem in that position is either Empty, or an open Gate, or a Portal, or a Switch
    * if rightMoves is not Nothing, the number is positive and less than minMoves
    */
-   field isTutorial    // Bool
+   field status        // QuellStatus
    field board         // [[QElem]] 
    field solution      // [Dir]
    field minMoves      // Number
@@ -1181,6 +1241,12 @@ type QuellLevel is record {
    field numMoves      // Number
    field rightMoves    // Maybe(Number)
    field numPearls     // Number
+}
+
+type QuellState is variant {
+  case RegularLevel      {}
+  case TutorialLevel     {}
+  case UnderConstruction {}
 }
 
 type QElem is variant {
@@ -1258,6 +1324,9 @@ function rS()     { return(RotableSpike)                         }
 // ---------------------------
 //  Detection functions
 // ---------------------------
+function isTutorial_(quell)          { return(status(quell) == TutorialLevel)     }
+function isUnderConstruction_(quell) { return(status(quell) == UnderConstruction) }
+
 function isEmpty_(qelem)        { return(matching (qelem)  select True  on Empty        False otherwise) }
 function isPearl_(qelem)        { return(matching (qelem)  select True  on Pearl        False otherwise) }
 function isWall_(qelem)         { return(matching (qelem)  select True  on Wall         False otherwise) }
@@ -1338,7 +1407,7 @@ function ballBeamingOn_(quell) { return(beaming(ball(quel)))        } /* PRECOND
 //  Hint information on Quell
 // ---------------------------
 function firstTutorialDHintOn_(quell) {
-  return(choose just(head(solution(quell))) when (isTutorial(quell))
+  return(choose just(head(solution(quell))) when (isTutorial_(quell))
                 Nothing otherwise)
 }
 
@@ -1483,34 +1552,25 @@ function currentLimit()  { return(Limit (pointsTo <- currentDirWith_ (attrAColor
 function currentSpike()  { return(Spike (pointsTo <- currentDirWith_ (attrAColor()))) } /* PRECOND: * there is a  spike  represented in the current cell */
 function currentGate()   { code := currentNumWith_(attrBColor()) mod 10
                            return(Gate  (closed   <- decodedBool_(code)))             } /* PRECOND: * there is a  gate   represented in the current cell */
-function currentPortal() { return(Portal(target   <- currentPosWith_(attrAColor())
-                                       , id       <- currentNumWith_(attrBColor())))  } /* PRECOND: * there is a  portal represented in the current cell */
-
+function currentPortal() { return(Portal(target   <- currentPortalTarget()
+                                       , id       <- currentPortalID()))              } /* PRECOND: * there is a  portal represented in the current cell */
 
 // ---------
 // Detecting QElems
 // ---------
-function hasBall() {
-  ballCode := numStones(ballColor())
-  return(ballCode > 0)
-}
+function qelemID()         { return(numStones(qelemColor())) }
+function hasPortal()       { return(qelemID() == codeOfPortal())                                       }
+function hasBorder()       { return(qelemID() == codeOfAngle()        || qelemID() == codeOfLimit())   } /* OBS: a border is either an Angle or a Limit */
+function hasRotableQElem() { return(qelemID() == codeOfRotableSpike() || qelemID() == codeOfSwitch())  }
 
-function hasBeamingBall() {
+function hasBall()         { ballCode := numStones(ballColor()); return(ballCode > 0)                                                   }
+function hasBeamingBall()  {
   /* PRECOND: current cell has a Portal */
   ballCode := numStones(ballColor())
   return(ballCode > 10)
 }
 
-function hasBorder() {
-  /* OBS: a border is either an Angle or a Limit */
-  qelemId := numStones(qelemColor())
-  return(qelemId == 2 || qelemId == 3)
-}
 
-function hasPortal() {
-  qelemId := numStones(qelemColor())
-  return(qelemId == 4)
-}
 
 function hasBeamingBox() {
   /* PRECOND: current cell has a Portal */
@@ -1518,10 +1578,19 @@ function hasBeamingBox() {
   return(boxCode==110 || boxCode==210) 
 }
 
-function hasRotableQElem() {
-  qelemId := numStones(qelemColor())
-  return(qelemId==8 || qelemId==9)
-}
+// For edition
+function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                     } 
+function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()      
+                                               && hasTopSpikesTempPos())                          }
+function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                }
+function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded()) }
+function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4)) }
+function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                       } /* PRECOND: current cell has TopSpikesDir ID encoded */
+
+function hasPortalID()                { return(qelemID() == codeOfPortal())                       }
+function hasTarget()                  { return(numStones(attrAColor()) > 0)                       } /* PRECOND: current cell has Portal ID encoded */
+function currentPortalID()            { return(currentNumWith_(attrBColor()))                     }
+function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                     }
 
 // ---------
 // Detecting QTokens
@@ -1533,22 +1602,9 @@ function hasBox()   {
   return(numStones(attrBColor())>=10) 
 }
 
-function hasPearl() {
-  /* OBS: pearls appear only on Empty */
-  qelemId := numStones(qelemColor())
-  return(qelemId==0 && numStones(attrBColor())==1) 
-}
-
-function hasJewel() {
-  /* OBS: jewels appear only on Empty or Wall */
-  qelemId := numStones(qelemColor())
-  return ((qelemId==0 || qelemId==10) && hasStones(attrAColor()))
-}
-
-function hasWall() {
-  qelemId := numStones(qelemColor())
-  return (qelemId==10)
-}
+function hasPearl() { return(qelemID()==0 && numStones(attrBColor())==1)                  } /* OBS: pearls appear only on Empty */
+function hasJewel() { return ((qelemID()==0 || qelemID()==10) && hasStones(attrAColor())) } /* OBS: jewels appear only on Empty or Wall */
+function hasWall()  { return (qelemID()==10)                                              }
 
 // ---------
 // Error messages
@@ -1585,13 +1641,13 @@ function msgNoQElement() {
 
   QElements are represented with qelemColor() stones, and their attributes with attrAColor() and attrBColor() stones, depending of the case.
     + Empty       ,  no qelem stones
-    + Corner      ,  1 stone   * dir      , attrA stones
+    + Corner      ,  1 stone   * dir      , attrA stones (with no dir is a generic Bound -- for edition)
     + Angle       ,  2 stones  * dir      , attrA stones
     + Limit       ,  3 stones  * pointsTo , attrA stones 
     + Portal      ,  4 stones  * target   , attrA stones
                                * id       , attrB stones
     + Gate        ,  5 stones  * clsed    , attrB stones
-    + Spike       ,  6 stones  * dir      , attrA stones 
+    + Spike       ,  6 stones  * dir      , attrA stones (with no dir is requesting a dir -- for edition) 
     + Multispike  ,  7 stones
     + Rotablespike,  8 stones  * spikesDir, attrA stones
     + Switch      ,  9 stones  * spikesDir, attrA stones
@@ -1602,6 +1658,7 @@ function msgNoQElement() {
     + Pearl                    *       1 attrB stones 
     + Box                      * gender, 100*attrB stones (must be equal to Pearl representation, and different from attributes at Gates, Portals or Switches)
                                          10+ for beaming boxes
+                                         In edition mode, it uses 20 qelem stones to indicated it is waiting for a gender.
     + Jewel                    * hits  , attrA stones (must be different from Pearl representation, because it may also appear on Empty)
   
   The ball is represented with ballColor() stones 
@@ -1641,21 +1698,37 @@ function attrBColor() { return(Red)   }
 function codeOfQelem_(qelem) {
   return (matching (qelem) select
              0 on Empty
-             0 on Pearl   // Pearls are always on Empty cells, and drawn with attribute colors
-             1 on Corner
-             2 on Angle
-             3 on Limit
-             4 on Portal
-             5 on Gate
-             6 on Spike
-             7 on Multispike
-             8 on RotableSpike
-             9 on Switch
-            10 on Wall
-            11 on Out
+             0 on Pearl        // codeOfPearl()       
+             1 on Corner       // codeOfCorner()       
+             2 on Angle        // codeOfAngle()       
+             3 on Limit        // codeOfLimit()       
+             4 on Portal       // codeOfPortal()      
+             5 on Gate         // codeOfGate()        
+             6 on Spike        // codeOfSpike()       
+             7 on Multispike   // codeOfMultispike()  
+             8 on RotableSpike // codeOfRotableSpike()
+             9 on Switch       // codeOfSwitch()      
+            10 on Wall         // codeOfWall()        
+            11 on Out          // codeOfOut()           
             boom(msgNotExpected("QElem")) otherwise
   )
 }
+
+function codeOfPearl()         { return(  0) }
+function codeOfCorner()        { return(  1) }
+function codeOfAngle()         { return(  2) }
+function codeOfLimit()         { return(  3) }
+function codeOfPortal()        { return(  4) }
+function codeOfGate()          { return(  5) }
+function codeOfSpike()         { return(  6) }
+function codeOfMultispike()    { return(  7) }
+function codeOfRotableSpike()  { return(  8) }
+function codeOfSwitch()        { return(  9) }
+function codeOfWall()          { return( 10) }
+function codeOfOut()           { return( 11) }
+
+function codeOfIncompleteBox() { return( 20) }  // For edition
+function codeOfTopSpikesDir()  { return(106) }
 /* ============================================================================================================
    END Quell-Representation.gbs
    ============================================================================================================
