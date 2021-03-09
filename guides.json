@@ -19,10 +19,4 @@
     , { "id": "8", "name": "Level 8", "path": "Levels/Level 08" }
   ] 
   }
-, { "name": "Tools"                        , "repo": "gobstonesgames/quell",
-    "exercises": [
-      { "id": "1", "name": "Level Editor", "path": "Levels/Tools/Level Editor" }
-    , { "id": "2", "name": "Level Test"  , "path": "Levels/Tools/Level Test"   }
-    ]
-  }
 ]
