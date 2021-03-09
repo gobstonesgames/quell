@@ -168,7 +168,8 @@ function msgNotExpected(element) {
 // ---------
 // Gobstones auxiliary functions
 // ---------
-procedure GoToCorner__(dir1, dir2) { /* PRECOND: dir1 and dir2 are not equal and not opposite of each other */                                            
+procedure GoToCorner__(dir1, dir2) { 
+  /* PRECOND: dir1 and dir2 are not equal and not opposite of each other */                                            
   GoToEdge(dir1)
   GoToEdge(dir2)
 }
@@ -507,6 +508,11 @@ procedure MoveToNextCellInBoardTraversalTo_And_(mainDir, secDir) {
 // ---------
 // List functions 
 // ---------
+function singleton_If_(x, cond) { 
+  return(choose [x] when (cond)
+                []  otherwise) 
+}
+
 function lengthOf_(xs) {
   counted := 0
   foreach elem in xs { counted := counted+1 }
@@ -702,7 +708,7 @@ procedure DrawTopBar_(quell) {
 
 procedure DrawQBoard_WithSpikesTo_(board, spikesDir) { 
   /* PRECOND: the board has at least one qelem */
-  GoToCorner__(North, West) Move(South)
+  GoToQBoardOrigin()
   DrawQRow_WithSpikesTo_(head(board), spikesDir)
   foreach row in tail(board) { Move(South); DrawQRow_WithSpikesTo_(row, spikesDir) }
 }
@@ -760,7 +766,7 @@ procedure DrawQBall_WithDHint_(ball, mdir)   {
     QBallAt(pos)               -> { GoToCell_(pos); DrawStaticQBall()
                                     DrawMDir_With_(mdir, ballColor())      }
     QBallTo(pos, dir, beaming) -> { GoToCell_(pos); DrawMovingQBall_(ball) }
-    NoBall                     -> { GoToCorner__(North, West); Move(South) }
+    NoBall                     -> { GoToQBoardOrigin()                     }
   }
 }
 
@@ -823,7 +829,6 @@ procedure DrawQElem_WithSpikesTo_(qelem, spikesDir) {
     }
 }
 
-procedure DrawBound()               { DrawQElemID_(codeOfCorner())                                       }
 procedure DrawCornerTo_(dir)        { DrawQElemID_(codeOfCorner())      ; CompleteQElemWithDir_(dir)     }
 procedure DrawAngleTo_(dir)         { DrawQElemID_(codeOfAngle())       ; CompleteQElemWithDir_(dir)     }
 procedure DrawLimitTo_(dir)         { DrawQElemID_(codeOfLimit())       ; CompleteQElemWithDir_(dir)     }
@@ -838,7 +843,6 @@ procedure DrawWall()                { DrawQElemID_(codeOfWall())                
 procedure DrawOut()                 { DrawQElemID_(codeOfOut())                                          }
 
 procedure DrawOpenGate()          { DrawGate_(False)                                           }
-procedure DrawWallOverJewel()     { DrawWall(); ClearJewel(); DrawJewelIntoWall()              }
 procedure DrawBox_(gender)        { DrawNum_With_(100*codeOfGender_(gender), attrBColor())     }
 procedure DrawBeamingBox_(gender) { DrawNum_With_(100*codeOfGender_(gender)+10, attrBColor())  } /* Beaming is indicated with 10 addtional stones */
 
@@ -846,11 +850,19 @@ procedure CompleteRotableMDir_(mdir)   { DrawDir_With_(valueOf_Or_(mdir, North),
 procedure CompleteQElemWithDir_(dir)   { DrawDir_With_(dir, attrAColor())                      } /* PRECOND: current cell has a Spike, TopSpikesDir, Corner, Angle, or Limit ID encoded */
 procedure CompleteQElemWithBool_(cond) { DrawBool_With_(cond, attrBColor())                    } /* PRECOND: current cell has a Pearl or Gate ID encoded */
 
-procedure DrawTopSpikesTempPos_(pos)   { DrawPos_With_(pos, attrBColor())                      }
-
 procedure DrawPortal_Base(id)          { DrawQElemID_(codeOfPortal()) 
                                          DrawNum_With_(id, attrBColor())                       }
 procedure DrawPortalPos_(pos)          { DrawPos_With_(pos, attrAColor())                      }
+
+// ---------
+// For edition
+// ---------
+procedure DrawBound()               { DrawQElemID_(codeOfCorner())                                       }
+procedure DrawWallOverJewel()     { DrawWall(); ClearJewel(); DrawJewelIntoWall()              }
+procedure DrawTopSpikesTempPos_(pos)   { DrawPos_With_(pos, attrBColor())                      }
+
+procedure EnterBoundDrawing() { DrawBool_With_(True, attrBColor()) } /* PRECOND: current cell has a bound */
+procedure ExitBoundDrawing()  { ClearAttrB()                       } /* PRECOND: current cell has a bound and a limitEdition boolean */
 
 // ---------
 // Clearing operations
@@ -1559,9 +1571,11 @@ function currentPortal() { return(Portal(target   <- currentPortalTarget()
 // Detecting QElems
 // ---------
 function qelemID()         { return(numStones(qelemColor())) }
-function hasPortal()       { return(qelemID() == codeOfPortal())                                       }
-function hasBorder()       { return(qelemID() == codeOfAngle()        || qelemID() == codeOfLimit())   } /* OBS: a border is either an Angle or a Limit */
-function hasRotableQElem() { return(qelemID() == codeOfRotableSpike() || qelemID() == codeOfSwitch())  }
+function hasPortal()       { return(qelemID() == codeOfPortal())                               }
+function hasSwitch()       { return(qelemID() == codeOfSwitch())                               }
+function hasRotableSpike() { return(qelemID() == codeOfRotableSpike())                         }
+function hasBorder()       { return(qelemID() == codeOfAngle()  || qelemID() == codeOfLimit()) } /* OBS: a border is either an Angle or a Limit */
+function hasRotableQElem() { return(hasRotableSpike()           || hasSwitch())                }
 
 function hasBall()         { ballCode := numStones(ballColor()); return(ballCode > 0)                                                   }
 function hasBeamingBall()  {
@@ -1579,18 +1593,21 @@ function hasBeamingBox() {
 }
 
 // For edition
-function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                     } 
-function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()      
-                                               && hasTopSpikesTempPos())                          }
-function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                }
-function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded()) }
-function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4)) }
-function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                       } /* PRECOND: current cell has TopSpikesDir ID encoded */
+function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                      } 
+function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()        
+                                               && hasTopSpikesTempPos())                           }
+function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                 }
+function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded())  }
+function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4))  }
+function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                        } /* PRECOND: current cell has TopSpikesDir ID encoded */
+  
+function hasPortalID()                { return(qelemID() == codeOfPortal())                        }
+function hasTarget()                  { return(numStones(attrAColor()) > 0)                        } /* PRECOND: current cell has Portal ID encoded */
+function currentPortalID()            { return(currentNumWith_(attrBColor()))                      }
+function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                      }
 
-function hasPortalID()                { return(qelemID() == codeOfPortal())                       }
-function hasTarget()                  { return(numStones(attrAColor()) > 0)                       } /* PRECOND: current cell has Portal ID encoded */
-function currentPortalID()            { return(currentNumWith_(attrBColor()))                     }
-function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                     }
+function hasBound()                   { return(qelemID() == codeOfCorner() && not hasDirEncoded()) }
+function inBoundDrawingMode()         { return(hasBound() && currentBoolWith_(attrBColor()))       }
 
 // ---------
 // Detecting QTokens
@@ -1729,6 +1746,26 @@ function codeOfOut()           { return( 11) }
 
 function codeOfIncompleteBox() { return( 20) }  // For edition
 function codeOfTopSpikesDir()  { return(106) }
+
+// ---------
+// QBoard traversal
+// ---------
+procedure GoToQBoardOrigin()                { GoToCorner__(North, West);               Move(South)     }
+procedure StartQBoardTraversal()            { StartBoardTraversalTo_And_(East, South); Move(South)     }
+function  atEndOfQBoardTraversal()          { return(atEndOfBoardTraversalTo_And_(East, South))        }
+procedure MoveToNextCellInQBoardTraversal() { MoveToNextCellInBoardTraversalTo_And_(East, South)       }
+
+function  canMoveInQBoard(dir)              { return(canMove(dir) 
+                                                  && when_Also_(dir==North, canMove__Times(North, 2))) }
+function  isAtQBoardEdge() { 
+  curDir := North
+  while (curDir /= West && canMoveInQBoard(curDir)) {
+    curDir := nextDir(curDir)
+  }
+  return(not canMoveInQBoard(curDir)) 
+}
+
+
 /* ============================================================================================================
    END Quell-Representation.gbs
    ============================================================================================================

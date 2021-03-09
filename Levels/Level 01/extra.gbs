@@ -1,8 +1,8 @@
 function level() {
   return(QuellLevel(
-           isTutorial <- False
+           status     <- RegularLevel
          , board      <- board01()
-         , solution   <-  [ East, North, West, South, East ]
+         , solution   <- [ East, North, West, South, East ]
          , minMoves   <- 5
          , jewel      <- QJewel(jpos <- pos(2,2), hits <- 4)
          , spikesDir  <- Nothing

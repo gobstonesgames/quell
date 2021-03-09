@@ -1,6 +1,6 @@
 function level() {
   return(QuellLevel(
-           isTutorial <- True
+           status     <- TutorialLevel
          , board      <- boardT02()
          , solution   <- [ East, South, West, North, East ]
          , minMoves   <- 5

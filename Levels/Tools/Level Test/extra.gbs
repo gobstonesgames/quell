@@ -1,12 +1,12 @@
 function level() {
   return(QuellLevel(
-           isTutorial <- True
+           status     <- TutorialLevel
          , board      <- boardT01()
          , solution   <- [South, East, North]
          , minMoves   <- 3
          , jewel      <- NoJewel
          , spikesDir  <- just(South)
-         , boxes      <- [(pos(3,4), Masculine), (pos(10,5), Femenine) ]
+         , boxes      <- [(pos(3,4), Male), (pos(10,5), Female) ]
          , ball       <- QBallAt(bpos <- pos(3,5))
          , numMoves   <- 0
          , rightMoves <- just(0)

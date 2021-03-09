@@ -349,6 +349,11 @@ procedure MoveToNextCellInBoardTraversalTo_And_(mainDir, secDir) {
 // ---------
 // List functions 
 // ---------
+function singleton_If_(x, cond) { 
+  return(choose [x] when (cond)
+                []  otherwise) 
+}
+
 function lengthOf_(xs) {
   counted := 0
   foreach elem in xs { counted := counted+1 }

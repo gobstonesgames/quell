@@ -60,6 +60,7 @@ rules:
   - { image: GateOpen-withBallW.png    , when: { black:   5, blue:   9, green:   0, red:   1 } }
   - { image: GateOpen-withBall.png     , when: { black:   5, blue: '*', green:   0, red:   1 } }
   - { image: Bound.png                 , when: { black:   1, blue:   0, green:   0, red:   0 } }
+  - { image: BoundDrawingMode.png      , when: { black:   1, blue:   0, green:   0, red:   1 } }
   - { image: LimitH-N.png              , when: { black:   3, blue:   0, green:   1, red:   0 } }
   - { image: LimitH-S.png              , when: { black:   3, blue:   0, green:   3, red:   0 } }
   - { image: LimitV-E.png              , when: { black:   3, blue:   0, green:   2, red:   0 } }

@@ -4,6 +4,10 @@ board:
   user_permissions:
     can_edit_board: true
     can_view_size_section: true
+execution_speed:
+  active: instantaneous
+  user_permissions:
+    can_change_speed: true
 
 inherit:
   $course: gobstonesgames/quell
@@ -11,7 +15,7 @@ inherit:
     extra: true
     attires:
       - Quell
-  execution_speed: true
+  # execution_speed: true
   source: true
   library: true
   board: 

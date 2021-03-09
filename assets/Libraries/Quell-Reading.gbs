@@ -100,9 +100,11 @@ function currentPortal() { return(Portal(target   <- currentPortalTarget()
 // Detecting QElems
 // ---------
 function qelemID()         { return(numStones(qelemColor())) }
-function hasPortal()       { return(qelemID() == codeOfPortal())                                       }
-function hasBorder()       { return(qelemID() == codeOfAngle()        || qelemID() == codeOfLimit())   } /* OBS: a border is either an Angle or a Limit */
-function hasRotableQElem() { return(qelemID() == codeOfRotableSpike() || qelemID() == codeOfSwitch())  }
+function hasPortal()       { return(qelemID() == codeOfPortal())                               }
+function hasSwitch()       { return(qelemID() == codeOfSwitch())                               }
+function hasRotableSpike() { return(qelemID() == codeOfRotableSpike())                         }
+function hasBorder()       { return(qelemID() == codeOfAngle()  || qelemID() == codeOfLimit()) } /* OBS: a border is either an Angle or a Limit */
+function hasRotableQElem() { return(hasRotableSpike()           || hasSwitch())                }
 
 function hasBall()         { ballCode := numStones(ballColor()); return(ballCode > 0)                                                   }
 function hasBeamingBall()  {
@@ -120,18 +122,21 @@ function hasBeamingBox() {
 }
 
 // For edition
-function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                     } 
-function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()      
-                                               && hasTopSpikesTempPos())                          }
-function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                }
-function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded()) }
-function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4)) }
-function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                       } /* PRECOND: current cell has TopSpikesDir ID encoded */
+function currentTopSpikesDirTempPos() { return(currentPosWith_(attrBColor()))                      } 
+function editingTopSpikesDir()        { return(qelemID() == codeOfTopSpikesDir()        
+                                               && hasTopSpikesTempPos())                           }
+function hasIncompleteBox()           { return(qelemID() == codeOfIncompleteBox())                 }
+function hasIncompleteSpike()         { return(qelemID() == codeOfSpike() && not hasDirEncoded())  }
+function hasDirEncoded()              { return(num_IsBetween_And_(numStones(attrAColor()), 1, 4))  }
+function hasTopSpikesTempPos()        { return(numStones(attrBColor()) > 0)                        } /* PRECOND: current cell has TopSpikesDir ID encoded */
+  
+function hasPortalID()                { return(qelemID() == codeOfPortal())                        }
+function hasTarget()                  { return(numStones(attrAColor()) > 0)                        } /* PRECOND: current cell has Portal ID encoded */
+function currentPortalID()            { return(currentNumWith_(attrBColor()))                      }
+function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                      }
 
-function hasPortalID()                { return(qelemID() == codeOfPortal())                       }
-function hasTarget()                  { return(numStones(attrAColor()) > 0)                       } /* PRECOND: current cell has Portal ID encoded */
-function currentPortalID()            { return(currentNumWith_(attrBColor()))                     }
-function currentPortalTarget()        { return(currentPosWith_(attrAColor()))                     }
+function hasBound()                   { return(qelemID() == codeOfCorner() && not hasDirEncoded()) }
+function inBoundDrawingMode()         { return(hasBound() && currentBoolWith_(attrBColor()))       }
 
 // ---------
 // Detecting QTokens

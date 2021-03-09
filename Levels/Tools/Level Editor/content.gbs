@@ -1,9 +1,26 @@
 interactive program {
-  INIT       -> { DrawQuell_(level())      }
-  K_R        -> { DrawQuell_(level())      }
-  K_DOWN     -> { ProcessOneStepTo_(South) }
-  K_UP       -> { ProcessOneStepTo_(North) }
-  K_LEFT     -> { ProcessOneStepTo_(West)  }    
-  K_RIGHT    -> { ProcessOneStepTo_(East)  }
-  TIMEOUT(1) -> { ProcessOneStep()         }
+  INIT     -> { DrawTopBar_(emptyLevel())         }
+  K_UP     -> { ProcessKeyTo_(North)              }    
+  K_RIGHT  -> { ProcessKeyTo_(East)               }
+  K_DOWN   -> { ProcessKeyTo_(South)              }   
+  K_LEFT   -> { ProcessKeyTo_(West)               }
+  K_RETURN -> { ToogleBoundDrawingMode()          }
+  K_DELETE -> { ClearCurrentElement()             }
+  K_ESCAPE -> { AbortPartialEdition()             }
+  K_1      -> { EditPortalA()                     }
+  K_2      -> { EditPortalB()                     }
+  K_B      -> { EditBall()                        }
+  K_D      -> { StartTopSpikesDirEdition()        }
+  K_F      -> { CompleteFemaleBox()               }
+  K_G      -> { EditGate()                        }
+  K_J      -> { EditJewel()                       }
+  K_K      -> { StartSpikeEdition()               }
+  K_M      -> { EditMultispikeOrCompleteMaleBox() }
+  K_O      -> { EditOut()                         }
+  K_P      -> { EditPearl()                       }
+  K_R      -> { EditRotableSpike()                }
+  K_S      -> { EditSwitch()                      }
+  K_W      -> { EditWall()                        }
+  K_X      -> { StartBoxEdition()                 }
+  K_V      -> { ValidateLevel()                   }
 }

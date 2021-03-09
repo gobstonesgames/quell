@@ -111,6 +111,26 @@ function codeOfOut()           { return( 11) }
 
 function codeOfIncompleteBox() { return( 20) }  // For edition
 function codeOfTopSpikesDir()  { return(106) }
+
+// ---------
+// QBoard traversal
+// ---------
+procedure GoToQBoardOrigin()                { GoToCorner__(North, West);               Move(South)     }
+procedure StartQBoardTraversal()            { StartBoardTraversalTo_And_(East, South); Move(South)     }
+function  atEndOfQBoardTraversal()          { return(atEndOfBoardTraversalTo_And_(East, South))        }
+procedure MoveToNextCellInQBoardTraversal() { MoveToNextCellInBoardTraversalTo_And_(East, South)       }
+
+function  canMoveInQBoard(dir)              { return(canMove(dir) 
+                                                  && when_Also_(dir==North, canMove__Times(North, 2))) }
+function  isAtQBoardEdge() { 
+  curDir := North
+  while (curDir /= West && canMoveInQBoard(curDir)) {
+    curDir := nextDir(curDir)
+  }
+  return(not canMoveInQBoard(curDir)) 
+}
+
+
 /* ============================================================================================================
    END Quell-Representation.gbs
    ============================================================================================================

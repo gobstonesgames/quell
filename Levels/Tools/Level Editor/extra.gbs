@@ -1,6 +1,8 @@
-function level() {
+function level() { return(emptyLevel()) }
+
+function emptyLevel() {
   return(QuellLevel(
-           isTutorial <- True
+           status     <- UnderConstruction
          , board      <- [[Out]]
          , solution   <- []
          , minMoves   <- 0
@@ -13,3 +15,476 @@ function level() {
          , numPearls  <- 0
   ))
 }
+
+procedure ProcessKeyTo_(dir) {
+  /* OBS: dir can be used for completion of a Spike, to change TopSpikesDir, 
+          or to move (if it's free to move or in BoundDrawingMode)
+  */
+  if     (hasIncompleteSpike())   { CompleteQElemWithDir_(dir) }
+  elseif (editingTopSpikesDir())  { ChangeTopSpikesDirTo_(dir) }
+  elseif (not hasIncompleteBox()) { Move_InBoardZone(dir)      }
+}
+
+procedure ToogleBoundDrawingMode() {
+    if (inBoundDrawingMode()) { ExitBoundDrawing()  }
+    elseif (hasBound())       { EnterBoundDrawing() }
+    elseif (isEmptyCell())    { DrawBound()         } 
+}
+
+procedure AbortPartialEdition() {
+  if (hasIncompleteSpike() || hasIncompleteBox()) { ClearQElemID()             }
+  elseif (editingTopSpikesDir())                  { AbortTopSpikesDirEdition() }
+  elseif (inBoundDrawingMode())                   { ExitBoundDrawing()         }
+}
+
+procedure StartTopSpikesDirEdition() {
+  /* PURPOSE: starts the edition of TopSpikesDir. Leaves the head on TopSpikesDir cell 
+     PRECOND: 
+  */
+  if (not hasOperationInCourse()) {
+    pos := currentPos()
+    GoToTopSpikesDir()
+    DrawQElemID_(codeOfTopSpikesDir()-100)
+    DrawTopSpikesTempPos_(pos) 
+  }
+}
+
+
+procedure EditPearl()         { if (isEmptyCell())  { DrawPearl()                                } }
+procedure EditPortalA()       { EditPortal_(1) }
+procedure EditPortalB()       { EditPortal_(2) }
+procedure EditGate()          { if (isEmptyCell())  { DrawOpenGate()                             } }
+
+procedure StartSpikeEdition() { if (isEmptyCell())  { DrawQElemID_(codeOfSpike())                } }
+procedure EditRotableSpike()  { if (isEmptyCell())  { DrawRotableSpikeTo_(currentTopSpikesDir()) } }
+procedure EditSwitch()        { if (isEmptyCell())  { DrawSwitchTo_(currentTopSpikesDir())       } }
+    
+procedure EditWall()          { if (isEmptyCell())  { DrawWall()                                 } 
+                                elseif (hasJewel()) { DrawWallOverJewel()                        } }
+procedure EditOut()           { if (isEmptyCell())  { DrawOut()                                  } }
+
+procedure EditBall()          { if (isEmptyCell())  { DrawStaticQBall()                          } }
+procedure StartBoxEdition()   { if (isEmptyCell())  { DrawQElemID_(codeOfIncompleteBox())        } }
+procedure EditJewel()         { if (isEmptyCell())  { DrawJewelAlone()                           } 
+                                elseif (hasWall())  { DrawJewelIntoWall()                        } }
+
+procedure CompleteFemaleBox() { if (hasIncompleteBox()) { ClearQElemID(); DrawBox_(Female)       } }
+procedure EditMultispikeOrCompleteMaleBox() {
+                                if (hasIncompleteBox()) { ClearQElemID(); DrawBox_(Male)         }
+                                elseif (isEmptyCell())  { DrawMultispike()                       } }
+
+procedure ClearCurrentElement() {
+  if (hasPortalID() && hasTarget()) { ClearPortalLink() }
+  ClearCell()
+}
+
+//--------------------------------------------
+// Auxiliaries
+//--------------------------------------------
+procedure Move_InBoardZone(dir) {
+  /* PRECOND: the current cell is inside the board zone
+     OBS: if it is on an edge of the BoardZone, nothing happens 
+  */
+  if (canMoveInQBoard(dir)) {
+    if (inBoundDrawingMode()) 
+         { 
+           ExitBoundDrawing(); Move(dir)
+           if (isEmptyCell()) { DrawBound(); EnterBoundDrawing() }
+         } 
+    else { Move(dir) }
+  }
+}
+
+function hasOperationInCourse() {
+  return (hasIncompleteSpike() || hasIncompleteBox() || editingTopSpikesDir() || inBoundDrawingMode())
+}
+
+procedure ChangeTopSpikesDirTo_(dir) {
+  /* PRECOND: current cell is TopSpikesDir cell (with TopSpikesDir ID)
+               and a TopSpikesDirTempPos is encoded at the current cell */
+  ClearTopSpikesDirDirection()               
+  CompleteQElemWithDir_(dir)
+  AdjustAllRotableQElemsTo_(dir) // It changes the head position!
+  GoToTopSpikesDir()             // The return direction is encoded in TopSpikesDir position
+  ClearTopID()
+  ReturnFromTopSpikesDir()
+}
+
+procedure AbortTopSpikesDirEdition() {
+  /* PRECOND: there is a TopSpikesDir ID, and a TopSpikesDirTempPos encoded at the current cell */
+  ClearTopID()
+  ReturnFromTopSpikesDir()
+}
+
+procedure ReturnFromTopSpikesDir() {
+  /* PRECOND: there is a TopSpikesDirTempPos coded at the current cell */
+  pos := currentTopSpikesDirTempPos()
+  ClearTopSpikesDirTempPos()
+  GoToCell_(pos)
+}
+
+procedure EditPortal_(id) {
+  /* OBS: if it is not Emtpty, nothing happens. 
+          If there is none, add portal base with no target.
+          If there is one at a different location, add portal with tpos, and go to tpos to add curpos. 
+          If there are more, or one at the same location, nothing happens. 
+  */
+  if (isEmptyCell()) {
+    let (portalsPos, numPortals) := posAndCantOfPortalsWithId_(id)
+    if     (numPortals==0) { DrawPortal_Base(id) }
+    elseif (numPortals==1) { target := head(portalsPos)
+                             source := currentPos()
+                             if (target /= source) {
+                               // First draw current portal, with the other as target
+                               DrawPortal_Base(id); DrawPortalPos_(target)
+                               // Then complete the target with this portal positiion
+                               GoToCell_(target)  ; DrawPortalPos_(source)
+                               // And end in the initial cell
+                               GoToCell_(source)
+                             }
+                           }
+ }
+}
+
+function posAndCantOfPortalsWithId_(id) {
+  let (poss, cant) := ([], 0) 
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal()) {
+    if (currentPortalID()==id) { let (poss, cant) := (poss++[currentPos()], cant+1) }
+    MoveToNextCellInQBoardTraversal()
+  }
+  return (poss, cant)
+}
+
+procedure ClearPortalLink() {
+  /* PRECOND: hasPortalID() and portal hasTarget() */
+  pos    := currentPos()
+  target := currentPortalTarget()
+  GoToCell_(target) 
+  ClearPortalTarget()
+  GoToCell_(pos)
+}
+
+//--------------------------------------------
+// Level validation operations
+//--------------------------------------------
+procedure ValidateLevel() {
+  /* OBS: if TopSpikesDir is Nothing, and there are any Switch, change it to North */
+  if (hasOperationInCourse())             { /* Incomplete operation */  BOOM("Incomplete operation") }
+  elseif (not allBoundariesOk ())         { /* Boundaries are not ok */ BOOM("Boundaries not ok")    }
+  else { info := countLimitedInnerElements()
+         if (not hasValidElements_(info)) { /* HasInvalidElements */    BOOM("Some elements are not right") }
+         else {
+           if (numInnerSwitches(info) > 0) { NormalizeTopSpikesDir() }
+           ConvertAllOutAndBoundSectors()
+         }
+       }
+}
+
+function allBoundariesOk () {
+  MarkOkBoundaries ()
+  return (not thereIsUnmarkedBound())
+}
+
+procedure ConvertAllOutAndBoundSectors() {
+   ProcessPhases()
+   ConvertAllBounds()
+   ConvertAllMarks()
+}
+
+type LevelInfo is record {
+  field numInnerBalls     // Number
+  field numInnerJewels    // Number
+  field numInnerPearls    // Number
+  field numInnerSwitches  // Number
+  field numInnerRotSpikes // Number
+  field rotableSpikesDir  // Maybe(Dir)
+}
+
+function countLimitedInnerElements() {
+  /* PRECOND: allBoundariesOk() */
+  ConvertAllOutAndBoundSectors()
+  let (numInnerBallsSeen, numInnerJewelsSeen, numInnerPearlsSeen
+     , numSwitchesSeen  , numRotSpikesSeen) := (0,0,0,0,0) 
+  rotableSpikesDirSeen := Nothing     
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal()) {
+    // Increment corresponding counters
+    if     (hasBall())         { numInnerBallsSeen     := numInnerBallsSeen     + 1 }
+    elseif (hasJewel())        { numInnerJewelsSeen    := numInnerJewelsSeen    + 1 }
+    elseif (hasPearl())        { numInnerPearlsSeen    := numInnerPearlsSeen    + 1 }
+    elseif (hasSwitch())       { numInnerSwitchesSeen  := numInnerSwitchesSeen  + 1 }
+    elseif (hasRotableSpike()) { numInnerRotSpikesSeen := numInnerRotSpikesSeen + 1
+                                 rotableSpikesDirSeen  := currentMDirWith_(attrAColor())
+                               }
+    MoveToNextCellInQBoardTraversal()
+  }
+  return (LevelInfo(
+            numInnerBalls     <- numInnerBallsSeen
+          , numInnerJewels    <- numInnerJewelsSeen
+          , numInnerPearls    <- numInnerPearlsSeen
+          , numInnerSwitches  <- numSwitchesSeen
+          , numInnerRotSpikes <- numRotSpikesSeen
+          , rotableSpikesDir  <- rotableSpikesDirSeen))
+}
+
+function hasValidElements_(info) { 
+  return(numInnerJewels(info) < 2 
+      && numInnerBalls(info) == 1
+      && numInnerPearls(info) > 0 
+      && (numInnerRotSpikes(info) > 0) == (numInnerSwitches(info) > 0))
+}
+
+procedure NormalizeTopSpikesDir() {
+    BOOM("To complete NormalizeTopSpikesDir")
+}
+
+//--------------------------------------------
+// Level validation operations: Marking boundaries
+//--------------------------------------------
+procedure MarkOkBoundaries() {
+  /* OBS: If there is a boundary that is not ok, it stops */
+  allSeenOk := True
+  while (allSeenOk && thereIsUnmarkedBound()) { 
+    GoToUnmarkedBound()
+    allSeenOk := allSeenOk && currentBoundaryIsOk()
+    if (allSeenOk) { MarkCurrentBoundary() }
+  }
+}
+
+procedure MarkCurrentBoundary() {
+    /* PRECOND: 
+       * current cell is an unmarked bound
+       * boundary is closed
+  */
+  while (hasNextUnmarkedBound()) {
+    Move(nextUnmarkedBoundDir())
+    MarkCurrentBound()  
+  }
+}
+
+function thereIsUnmarkedBound() {
+  GoToUnmarkedBound()
+  return(hasUnmarkedBound())
+}
+
+procedure GoToUnmarkedBound () {
+  /* OBS: board search traversal for isUnmarkedBound with no-more-cells control */
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal() && not hasUnmarkedBound()) { MoveToNextCellInQBoardTraversal() }
+}
+
+function currentBoundaryIsOk() {
+  /* PRECOND: current cell is an unmarked bound */
+  ok := numNextUnmarkedBounds()==2 && numNextMarkedBounds()==0
+  if (ok) {
+    MarkCurrentBound()
+    Move(nextUnmarkedBoundDir())
+    while (numNextUnmarkedBounds()==1 && numNextMarkedBounds()==1) {
+       MarkCurrentBound()
+       Move(nextUnmarkedBoundDir()) 
+    }
+    ok := numNextUnmarkedBounds()==0 && numNextMarkedBounds()==2
+    if (ok) { MarkCurrentBound() }
+  }
+  return(ok)
+}
+
+function nextMarkedBoundDir()  { return(head(nextMarkedBoundDirs()))        }
+function hasNextMarkedBound()  { return(not isEmpty(nextMarkedBoundDirs())) }
+function numNextMarkedBounds() { return (lengthOf_(nextMarkedBoundDirs()))  }
+function nextMarkedBoundDirs() {
+  dirs := []
+  foreach dir in [North,East,South,West] { dirs := dirs ++ singleton_If_(dir, hasMarkedBoundTo_(dir)) }
+  return(dirs)
+}
+function hasMarkedBoundTo_(dir) { return (canMove(dir) && isMarkedBoundTo_(dir)) }
+function isMarkedBoundTo_(dir)  { Move(dir); return(hasMarkedBound())            } /* PRECOND: there is a cell to dir */
+function hasMarkedBound()       { return (hasBound() && isMarked())              }
+
+
+function nextUnmarkedBoundDir()  { return(head(nextUnmarkedBoundDirs()))         }
+function hasNextUnmarkedBound()  { return(not isEmpty(nextUnmarkedBoundDirs()))  }
+function numNextUnmarkedBounds() { return (lengthOf_(nextUnmarkedBoundDirs()))   }
+function nextUnmarkedBoundDirs() {
+  dirs := []
+  foreach dir in [North,East,South,West] { dirs := dirs ++ singleton_If_(dir, hasUnmarkedBoundTo_(dir)) }
+  return(dirs)
+}
+function hasUnmarkedBoundTo_(dir) { return (canMove(dir) && isUnmarkedBoundTo_(dir)) }
+function isUnmarkedBoundTo_(dir)  { Move(dir); return(hasUnmarkedBound())            } /* PRECOND: there is a cell to dir */
+function hasUnmarkedBound()       { return (hasBound() && not isMarked())            }
+
+procedure MarkCurrentBound()      { DrawBool_With_(True, attrBColor())               }
+function  isMarked()              { return (currentBoolWith_(attrBColor()))          } /* PRECOND: cell hasBound */
+
+//--------------------------------------------
+// Level validation operations: Detecting outside and inside elements
+//--------------------------------------------
+type Zone is variant {
+  case Inside  {}
+  case Outside {}
+}
+
+function nextZone(zone) {
+  return(matching (zone) select
+           Inside  on Outside
+           Outside otherwise)
+}
+
+function codeOfZone_(zone) {
+  return(matching (zone) select
+           100 on Inside
+           200 otherwise)
+}
+
+procedure RemoveInsideMark() { Grab__Times(ballColor(), 100)                 } 
+procedure MarkAs_(zone)      { DrawNum_With_(codeOfZone_(zone), ballColor()) }
+
+function isInZone_(zone) {
+  return (matching (zone) select
+            isInside()  on Inside
+            isOutside() otherwise)
+}
+function isOutside() { return(currentNumWith_(ballColor()) >= 200) }
+function isInside()  { code := currentNumWith_(ballColor())
+                       return(code >= 100 && code < 200) }
+
+procedure ProcessPhases()  {
+  /* PRECOND: all cells are unprocessed */
+  curZone := Outside
+  while (thereAreUnprocessedCells()) {
+    ProcessPhaseFor_(curZone)
+    curZone := nextZone(curZone)
+  }
+}
+
+function thereAreUnprocessedCells() {
+  GoToAnUnprocessedCell()
+  return (isUnprocessedCell())
+}
+
+function  isUnprocessedCell()     { return (not isOutside() && not isInside()) }
+procedure GoToAnUnprocessedCell() {
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal() && not isUnprocessedCell()) { MoveToNextCellInQBoardTraversal() }
+}
+
+
+procedure ProcessPhaseFor_(zone) {
+  changed := True  // First pass of every phase has to occur...
+  while (changed) {
+    // Make a sweep traversal, and see if changed (cannot use a procedure, for eficiency -- data is needed)
+    StartQBoardTraversal()
+    anyCellChanged := False
+    cellChange     := currentCellWillChangeTo_(zone)
+    if (cellChange) { MarkAs_(zone) }
+    anyCellChanged := anyCellChanged || cellChange
+    while (not atEndOfQBoardTraversal()) {
+       MoveToNextCellInQBoardTraversal()
+       cellChange     := currentCellWillChangeTo_(zone)
+       if (cellChange) { MarkAs_(zone) }
+       anyCellChanged := anyCellChanged || cellChange
+    }
+    // End of sweep traversal
+    changed := changed && anyCellChanged
+  }
+}
+
+function currentCellWillChangeTo_(zone) {
+  return (matching (zone) select
+            currentCellWillChangeToOutside() on Outside
+            currentCellWillChangeToInside()  otherwise)
+}
+
+function currentCellWillChangeToOutside() {
+  curDir     := North
+  curIsBound := hasBound()
+  seenAMatch := not canMoveInQBoard(curDir)
+                || choose neighbourTo_IsOutside(curDir)                      when (curIsBound)
+                          neighbourTo_IsNonBoundOutsideOrBoundInside(curDir) otherwise
+  while (curDir /= West && not seenAMatch) {
+    curDir := nextDir(curDir)
+    seenAMatch := not canMoveInQBoard(curDir)
+                  || choose neighbourTo_IsOutside(curDir)                      when (curIsBound)
+                            neighbourTo_IsNonBoundOutsideOrBoundInside(curDir) otherwise
+  } 
+  return (seenAMatch)                        
+}
+
+function currentCellWillChangeToInside() {
+  curDir     := North
+  curIsBound := hasBound()
+  seenAMatch := canMoveInQBoard(curDir)
+                && choose neighbourTo_IsInside(curDir)                       when (curIsBound)
+                          neighbourTo_IsNonBoundInsideOrBoundOutside(curDir) otherwise
+  while (curDir /= West && not seenAMatch) {
+    curDir := nextDir(curDir)
+    seenAMatch := canMoveInQBoard(curDir)
+                  && choose neighbourTo_IsInside(curDir)                       when (curIsBound)
+                            neighbourTo_IsNonBoundInsideOrBoundOutside(curDir) otherwise
+  } 
+  return (seenAMatch)                        
+}
+
+function neighbourTo_IsOutside(dir) {
+  /* PRECOND: there is a cell to dir in QBoard */
+  Move(dir)
+  return (isOutside())
+}
+
+function neighbourTo_IsInside(dir) {
+  /* PRECOND: there is a cell to dir in QBoard */
+  Move(dir)
+  return (isInside())
+}
+
+function neighbourTo_IsNonBoundOutsideOrBoundInside(dir) {
+  /* PRECOND: there is a cell to dir in QBoard */
+  Move(dir)
+  return (choose isInside()  when (hasBound()) 
+                 isOutside() otherwise)
+}
+
+function neighbourTo_IsNonBoundInsideOrBoundOutside(dir) {
+  /* PRECOND: there is a cell to dir in QBoard */
+  Move(dir)
+  return (choose isOutside() when (hasBound()) 
+                 isInside()  otherwise)
+}
+
+//--------------------------------------------
+// Level validation operations: Converting zone marked elements
+//--------------------------------------------
+procedure ConvertAllBounds() {
+  /* PRECOND: all cells have zone marks */
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal()) {
+    ConvertCurrentBound()
+    MoveToNextCellInQBoardTraversal()
+  }
+  ConvertCurrentBound()
+}
+
+procedure ConvertAllMarks() {
+  /* PRECOND: all bounds have no zone mark */
+  StartQBoardTraversal()
+  while (not atEndOfQBoardTraversal()) {
+    ConvertCurrentMark()
+    MoveToNextCellInQBoardTraversal()
+  }
+  ConvertCurrentMark()
+}
+
+procedure ConvertCurrentBound() {
+  /* OBS: THIS IS NOT THE FINAL CODE */
+  if     (isOutside()) { ClearCell(); DrawBound() } 
+  elseif (isInside())  { RemoveInsideMark()       }
+}
+
+procedure ConvertCurrentMark() {
+  /* PRECOND: bounds have no zone mark */
+  if     (isOutside()) { ClearCell(); DrawOut() } 
+  elseif (isInside())  { RemoveInsideMark()     }
+}
+

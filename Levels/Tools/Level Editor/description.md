@@ -16,23 +16,23 @@ board in your own level. The keys that draw QElements only can draw them if the 
 
 The keys to edit are the following:
   * arrow keys - move around Quell board (if current QElement is completed)
-  * `ESC` - abort an incomplete edition of a QElement
-  * `DEL` - clear the current cell, restoring the Empty QEelement
-  * `ENTER` (or `V`) - verify the current level
+  * `ESC`   - abort an incomplete edition of a QElement
+  * `DEL`   - clear the current cell, restoring the Empty QEelement
+  * `ENTER` - Toogle boundary drawing mode (On empty cell, draw a bound. On a bound, enter drawing mode. If in drawing mode, exit it. After verification, bounds become straight Limits, Angles or Corners, accordingly to their positions)
+  * `V` - verify the current level
   * `1` - Draw a Portal A  
   * `2` - Draw a Portal B
   * `B` - Draw a QBall
-  * `D` - Edit TopSpikesDir (needs completion with arrow keys)
+  * `D` - Start edition of TopSpikesDir (needs completion with arrow keys)
   * `G` - Draw an open Gate
   * `J` - Draw a Jewel (can work on Walls as well)
-  * `K` - Edit a Spike (needs completiong with arrow keys)
-  * `L` - Draw a boundary (after verification, they become straight Limits, Angles or Corners, accordingly to their positions)
-  * `M` - Draw a Multispike
+  * `K` - Start edition of a Spike (needs completiong with arrow keys)
+  * `M` - Draw a Multispike (or complete a Male Box, if edition of a box is started)
   * `P` - Draw a Pearl
   * `R` - Draw a RotableSpike (its direction is the last inserted TopSpikesDir, or North by default)
   * `S` - Draw a Switch (its direction is the last inserted TopSpikesDir, or North by default)
   * `W` - Draw a Wall (can work on a Jewel as well)
-  * `X` - Edit a Box (needs completion with `F` or `M` keys)
+  * `X` - Starts edition of a Box (needs completion with `F` or `M` keys)
 
 Validation of the level verifies several conditions:
   - there can be exactly one Ball
