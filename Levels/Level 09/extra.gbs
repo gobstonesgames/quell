@@ -1,0 +1,22 @@
+function level() {
+  return(QuellLevel(
+           status     <- RegularLevel
+         , board      <- board09()
+         , solution   <- [  ]
+         , minMoves   <- 5
+         , jewel      <- QJewel(jpos <- pos(2,2), hits <- 4)
+         , spikesDir  <- Nothing
+         , boxes      <- []
+         , ball       <- QBallAt(bpos <- pos(5,3))
+         , numMoves   <- 0
+         , rightMoves <- just(0)
+         , numPearls  <- 4
+  ))
+}
+
+function board01() { 
+  // [[QElem]], size=pos(9,8)
+  return(
+   [
+   ])
+}
