@@ -20,21 +20,23 @@ procedure ProcessKeyTo_(dir) {
   /* OBS: dir can be used for completion of a Spike, to change TopSpikesDir, 
           or to move (if it's free to move or in BoundDrawingMode)
   */
-  if     (hasIncompleteSpike())   { CompleteQElemWithDir_(dir) }
-  elseif (editingTopSpikesDir())  { ChangeTopSpikesDirTo_(dir) }
-  elseif (not hasIncompleteBox()) { Move_InBoardZone(dir)      }
+  if     (hasIncompleteSpike())       { CompleteQElemWithDir_(dir)             }
+  elseif (editingTopSpikesDir())      { ChangeTopSpikesDirTo_(dir)             }
+  elseif (enteringBoundDrawingMode()) { FinishEnteringBoundDrawingModeTo_(dir) }
+  elseif (not hasIncompleteBox())     { Move_InBoardZone(dir)                  }
 }
 
 procedure ToogleBoundDrawingMode() {
-    if (inBoundDrawingMode()) { ExitBoundDrawing()  }
-    elseif (hasBound())       { EnterBoundDrawing() }
-    elseif (isEmptyCell())    { DrawBound()         } 
+    if (inBoundDrawingMode()) { ExitBoundDrawingMode()          }
+    elseif (isEmptyCell())    { StartEnteringBoundDrawingMode() }
 }
 
 procedure AbortPartialEdition() {
-  if (hasIncompleteSpike() || hasIncompleteBox()) { ClearQElemID()             }
-  elseif (editingTopSpikesDir())                  { AbortTopSpikesDirEdition() }
-  elseif (inBoundDrawingMode())                   { ExitBoundDrawing()         }
+  if     (editingTopSpikesDir())      { AbortTopSpikesDirEdition() }
+  elseif (hasIncompleteSpike() 
+       || hasIncompleteBox())         { ClearQElemID()             }
+  elseif (inBoundDrawingMode() 
+       || enteringBoundDrawingMode()) { ExitBoundDrawingMode()     }
 }
 
 procedure StartTopSpikesDirEdition() {
@@ -82,21 +84,20 @@ procedure ClearCurrentElement() {
 // Auxiliaries
 //--------------------------------------------
 procedure Move_InBoardZone(dir) {
-  /* PRECOND: the current cell is inside the board zone
+  /* PRECOND: * the current cell is inside the board zone
+              * the current cell does not has a partial edition started
      OBS: if it is on an edge of the BoardZone, nothing happens 
   */
   if (canMoveInQBoard(dir)) {
     if (inBoundDrawingMode()) 
-         { 
-           ExitBoundDrawing(); Move(dir)
-           if (isEmptyCell()) { DrawBound(); EnterBoundDrawing() }
-         } 
-    else { Move(dir) }
+         { ProcessBoundDrawingModeMoveTo_(dir) } 
+    else { Move(dir)                           }
   }
 }
 
 function hasOperationInCourse() {
-  return (hasIncompleteSpike() || hasIncompleteBox() || editingTopSpikesDir() || inBoundDrawingMode())
+  return (hasIncompleteSpike() || hasIncompleteBox() 
+       || editingTopSpikesDir() || inBoundDrawingMode())
 }
 
 procedure ChangeTopSpikesDirTo_(dir) {
@@ -163,6 +164,30 @@ procedure ClearPortalLink() {
   GoToCell_(target) 
   ClearPortalTarget()
   GoToCell_(pos)
+}
+
+//--------------------------------------------
+// BoundDrawingMode operations
+//--------------------------------------------
+procedure ProcessBoundDrawingModeMoveTo_(dir) {
+  /* PRECOND: canMoveInQBoard(dir) and inBoundDrawingMode() */
+  currentInside := boundInnerDirection()
+  newInside     := adjustedInside(currentInside, dir)
+  ExitBoundDrawingMode()
+  // Draw corresponding bound
+
+  Move(dir)
+  if     (isEmptyCell())       { EnterBoundDrawingModeTo_(newInside) }
+  elseif (not hasFullBorder()) { Move(opposite(dir))                 }
+  else                         { AdjustFullBorder()                  }                
+}
+
+procedure AdjustFullBorder() {
+
+}
+
+function adjustedInside(currentInside, moveDir) {
+  return (currentInside)
 }
 
 //--------------------------------------------
